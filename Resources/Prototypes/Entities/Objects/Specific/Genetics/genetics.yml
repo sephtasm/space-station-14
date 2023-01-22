@@ -1,0 +1,28 @@
+- type: entity
+  name: DNA sequencer
+  parent: BaseItem
+  description: Used to sample or modify DNA.
+  id: DNASequencer
+  components:
+  - type: DNASequencer
+  - type: Sprite
+    sprite: Objects/Specific/Chemistry/syringe.rsi
+    netsync: false
+    layers:
+      - state: syringe1
+        map: ["enum.SolutionContainerLayers.Fill"]
+        visible: false
+      - state: syringe_base0
+        map: ["enum.SolutionContainerLayers.Base"]
+  - type: Item
+    sprite: Objects/Specific/Chemistry/syringe.rsi
+    heldPrefix: 0
+  - type: Appearance
+  - type: SolutionContainerVisuals
+    maxFillLevels: 1
+    fillBaseName: syringe
+  - type: Tag
+    tags:
+    - Trash
+  - type: StaticPrice
+    price: 40
