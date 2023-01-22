@@ -33,5 +33,21 @@ public abstract class SharedHumanoidSystem : EntitySystem
         // This should raise a HumanoidAppearanceUpdateEvent, but that requires this component to be made networked and
         // I cbf doing that atm.
         _appearance.SetData(uid, HumanoidVisualizerKey.Key, data);
+
+        RaiseLocalEvent(new HumanoidAppearanceUpdateEvent(uid));
+    }
+
+    /// <summary>
+    ///     Event raised directed at the target entity of an interaction to see if the user is allowed to perform some
+    ///     generic interaction.
+    /// </summary>
+    public sealed class HumanoidAppearanceUpdateEvent : HandledEntityEventArgs
+    {
+        public HumanoidAppearanceUpdateEvent(EntityUid uid)
+        {
+            Uid = uid;
+        }
+
+        public EntityUid Uid { get; }
     }
 }
