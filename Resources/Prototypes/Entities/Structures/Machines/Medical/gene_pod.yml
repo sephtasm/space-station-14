@@ -1,0 +1,72 @@
+﻿- type: entity
+  id: GenePod
+  parent: BaseMachinePowered
+  name: gene pod
+  description: An all-in-one genetic scanner and gene editor.
+  components:
+  - type: GenePod
+  - type: DeviceNetwork
+    deviceNetId: Wired
+  - type: DeviceList
+  - type: Sprite
+    netsync: false
+    sprite: Structures/Machines/Medical/gene_pod.rsi
+    snapCardinals: true
+    layers:
+    - state: icon
+    - state: screen
+    - state: occupied
+    - state: panel
+  - type: Physics
+    bodyType: Static
+  - type: Fixtures
+    fixtures:
+    - shape:
+        !type:PhysShapeAabb
+        bounds: "-0.25,-0.5,0.25,0.5"
+      density: 190
+      mask:
+      - MachineMask
+      layer:
+      - MachineLayer
+  - type: Construction
+    graph: Machine
+    node: machine
+    containers:
+    - machine_parts
+    - machine_board
+  - type: ContainerContainer
+    containers:
+      genePod-bodyContainer: !type:ContainerSlot
+      machine_board: !type:Container
+      machine_parts: !type:Container
+  - type: SignalReceiver
+    inputs:
+      GenePodReceiver: []
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 100
+      behaviors:
+      - !type:ChangeConstructionNodeBehavior
+        node: machineFrame
+      - !type:DoActsBehavior
+        acts: ["Destruction"]
+  - type: Machine
+    board: GenePodMachineCircuitboard
+  - type: Wires
+    BoardName: "GenePod"
+    LayoutId: GenePod
+  - type: Appearance
+    visuals:
+    - type: GenePodVisualizer
+  - type: Climbable
+  - type: ApcPowerReceiver
+    powerLoad: 200 #Receives most of its power from the console
+  - type: UpgradePowerDraw
+    powerDrawMultiplier: 0.75
+    scaling: Exponential
+  - type: EmptyOnMachineDeconstruct
+    containers:
+    - genePod-bodyContainer
