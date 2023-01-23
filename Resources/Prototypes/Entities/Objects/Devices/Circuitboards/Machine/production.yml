@@ -747,3 +747,24 @@
             Amount: 1
             DefaultPrototype: Beaker
             ExamineName: Glass Beaker
+
+- type: entity
+  id: GenePodMachineCircuitboard
+  parent: BaseMachineCircuitboard
+  name: gene pod machine board
+  description: A machine printed circuit board for a gene pod
+  components:
+    - type: Sprite
+      state: service
+    - type: MachineBoard
+      prototype: GenePod
+      requirements:
+        ScanningModule: 2
+        Manipulator: 2
+      materialRequirements:
+        Glass: 1
+      tagRequirements:
+          GlassBeaker:
+            Amount: 1
+            DefaultPrototype: Beaker
+            ExamineName: Glass Beaker
