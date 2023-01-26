@@ -286,3 +286,14 @@
       state: cpu_medical
     - type: ComputerBoard
       prototype: ComputerCloningConsole
+      
+- type: entity
+  parent: BaseComputerCircuitboard
+  id: GeneticsConsoleComputerCircuitboard
+  name: genetics console computer board
+  description: A computer printed circuit board for a genetics console.
+  components:
+    - type: Sprite
+      state: cpu_medical
+    - type: ComputerBoard
+      prototype: ComputerGeneticsConsole

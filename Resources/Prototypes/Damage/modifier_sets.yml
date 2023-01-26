@@ -298,3 +298,8 @@
     Heat: .6
   flatReductions:
     Heat: 1
+
+- type: damageModifierSet
+  id: HeatResistanceMutation
+  coefficients:
+    Heat: 1.0

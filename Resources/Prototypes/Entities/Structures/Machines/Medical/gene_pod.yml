@@ -15,8 +15,11 @@
     layers:
     - state: icon
     - state: screen
+      map: ["enum.GenePodVisualLayers.Screen"]
     - state: occupied
+      map: ["enum.GenePodVisualLayers.Pod"]
     - state: panel
+      map: ["enum.GenePodVisualLayers.Panel"]
   - type: Physics
     bodyType: Static
   - type: Fixtures
@@ -63,10 +66,51 @@
     - type: GenePodVisualizer
   - type: Climbable
   - type: ApcPowerReceiver
-    powerLoad: 200 #Receives most of its power from the console
+    powerLoad: 500
   - type: UpgradePowerDraw
     powerDrawMultiplier: 0.75
     scaling: Exponential
   - type: EmptyOnMachineDeconstruct
     containers:
     - genePod-bodyContainer
+
+- type: entity
+  parent: BaseComputer
+  id: ComputerGeneticsConsole
+  name: genetics console computer
+  description: The genetics scanning and gene editing console.
+  components:
+  - type: GeneticsConsole
+  - type: DeviceList
+  - type: DeviceNetwork
+    deviceNetId: Wired
+  - type: Sprite
+    layers:
+    - map: ["computerLayerBody"]
+      state: computer
+    - map: ["computerLayerKeyboard"]
+      state: generic_keyboard
+    - map: ["computerLayerScreen"]
+      state: dna_genetics
+    - map: ["computerLayerKeys"]
+      state: rd_key
+  - type: ApcPowerReceiver
+    powerLoad: 3000
+  - type: Computer
+    board: GeneticsConsoleComputerCircuitboard
+  - type: PointLight
+    radius: 1.5
+    energy: 1.6
+    color: "#871f8c"
+  - type: SignalTransmitter
+    transmissionRange: 4
+    outputs:
+      GenePodSender: []
+  - type: ActivatableUI
+    key: enum.GeneticsConsoleUiKey.Key
+  - type: UserInterface
+    interfaces:
+      - key: enum.GeneticsConsoleUiKey.Key
+        type: GeneticsConsoleBoundUserInterface
+  - type: Speech
+    speechSounds: Pai

@@ -15,8 +15,8 @@ namespace Content.Client.Genetics.Components
 
             var sprite = IoCManager.Resolve<IEntityManager>().GetComponent<SpriteComponent>(component.Owner);
             if (!component.TryGetData(GenePodVisuals.Status, out GenePodStatus status)) return;
-            sprite.LayerSetVisible(GenePodVisualLayers.Pod, StatusToPodVisibility(status));
             sprite.LayerSetVisible(GenePodVisualLayers.Screen, StatusToScreenVisibility(status));
+            sprite.LayerSetVisible(GenePodVisualLayers.Pod, StatusToPodVisibility(status));
             sprite.LayerSetVisible(GenePodVisualLayers.Panel, StatusToPanelVisibility(status));
         }
 

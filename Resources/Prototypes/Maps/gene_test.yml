@@ -1,0 +1,12 @@
+- type: gameMap
+  id: GeneTest
+  mapName: GeneTest
+  mapPath: /Maps/Test/gene_test.yml
+  minPlayers: 0
+  stations:
+    GeneTest:
+      mapNameTemplate: "GeneTest"
+      overflowJobs:
+        - Passenger
+      availableJobs:
+        Passenger: [ -1, -1 ]

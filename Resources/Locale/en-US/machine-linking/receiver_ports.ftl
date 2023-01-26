@@ -51,3 +51,9 @@ signal-port-description-artifact-analyzer-sender = Analysis console signal sende
 
 signal-port-name-artifact-analyzer-receiver = Pad
 signal-port-description-artifact-analyzer-receiver = Artifact analyzer signal receiver
+
+signal-port-name-gene-pod-sender = Genetics console
+signal-port-description-gene-pod-sender = Gene pod signal sender
+
+signal-port-name-gene-pod-receiver = Gene pod
+signal-port-description-gene-pod-receiver = Gene pod signal receiver

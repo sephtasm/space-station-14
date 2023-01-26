@@ -1,0 +1,18 @@
+# Mutations
+
+- type: mutation
+  id: Blindness
+  localizationStringId: genetics-mutation-name-blindness
+  effects: 
+    - !type:BlindnessMutationEffect
+  strength: 1.0
+  weight: 100
+  
+- type: mutation
+  id: HeatResistance
+  localizationStringId: genetics-mutation-name-heat-resistance
+  effects:
+    - !type:HeatResistanceMutationEffect
+  strength: 0.5
+  weight: 100
+  

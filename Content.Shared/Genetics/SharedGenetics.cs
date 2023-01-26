@@ -1,3 +1,4 @@
+using Content.Server.Medical.Components;
 using Content.Shared.Humanoid.Markings;
 using Robust.Shared.Serialization;
 using System;
@@ -24,9 +25,43 @@ namespace Content.Shared.Genetics
         EyeColor,
         Markings,
         Sex,
-        Gender,
+        Gender, // not used
         BaseLayer,
+        Mutation,
     }
+
+    [Serializable, NetSerializable]
+    public enum Base
+    {
+        A, T, G, C, Unknown, Empty
+    }
+
+    [Serializable, NetSerializable]
+    public class BasePair
+    {
+        public Base TopActual { get; set; }
+        public Base TopAssigned { get; set; }
+        public Base BotActual { get; set; }
+        public Base BotAssigned { get; set; }
+
+        public BasePair(Base topActual, Base topAssigned, Base botActual, Base botAssigned)
+        {
+            TopActual = topActual;
+            TopAssigned = topAssigned;
+            BotActual = botActual;
+            BotAssigned = botAssigned;
+        }
+
+        public BasePair(BasePair other)
+        {
+            TopActual = other.TopActual;
+            TopAssigned = other.TopAssigned;
+            BotActual = other.BotActual;
+            BotAssigned = other.BotAssigned;
+        }
+
+    }
+
 
     [Serializable, NetSerializable]
     public enum BlockType : byte
@@ -38,12 +73,17 @@ namespace Content.Shared.Genetics
     [Serializable, NetSerializable]
     public sealed class Gene
     {
-        public Gene(GeneType type, List<Block> blocks, MarkingCategories? markingCategory = null)
+        public Gene(GeneType type, List<Block> blocks, MarkingCategories? markingCategory = null, bool active = true, bool damaged = false)
         {
             Type = type;
             Blocks = blocks;
             MarkingCategory = markingCategory;
+            Active = active;
+            Damaged = damaged;
         }
+
+        public bool Active { get; set; } = true;
+        public bool Damaged { get; set; } = false;
 
         public GeneType Type { get; set; }
 
@@ -55,12 +95,36 @@ namespace Content.Shared.Genetics
     [Serializable, NetSerializable]
     public sealed class Block
     {
-        public Block(long value, BlockType blockType = BlockType.Primary)
+        public Block(int value, BlockType blockType = BlockType.Primary)
         {
             Type = blockType;
             Value = value;
         }
         public BlockType Type { get; set; } = BlockType.Primary;
-        public long Value { get; set; }
+        public int Value { get; set; }
+    }
+
+    public abstract class MutationChangedEvent : HandledEntityEventArgs
+    {
+        public MutationChangedEvent(EntityUid uid, int value, EntityUid? consoleUid)
+        {
+            Uid = uid;
+            Value = value;
+            ConsoleUid = consoleUid;
+        }
+
+        public EntityUid Uid { get; }
+
+        public EntityUid? ConsoleUid { get; }
+        public int Value { get; }
+    }
+
+    public sealed class ActivateMutationEvent : MutationChangedEvent
+    {
+        public ActivateMutationEvent(EntityUid uid, int value, EntityUid? consoleUid) : base(uid, value, consoleUid) { }
+    }
+    public sealed class DeactivateMutationEvent : MutationChangedEvent
+    {
+        public DeactivateMutationEvent(EntityUid uid, int value, EntityUid? consoleUid) : base(uid, value, consoleUid) { }
     }
 }

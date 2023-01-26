@@ -16,6 +16,12 @@ using Robust.Shared.Enums;
 using static Content.Shared.Humanoid.SharedHumanoidSystem;
 using System.ComponentModel.Design;
 using Content.Server.Database;
+using System;
+using Robust.Shared.Random;
+using Content.Shared.Genetics.Prototypes;
+using Content.Shared.Eye.Blinding;
+using Content.Shared.Damage;
+using Content.Server.Genetics.Components;
 
 namespace Content.Server.Genetics
 {
@@ -38,11 +44,20 @@ namespace Content.Server.Genetics
         [Dependency] private readonly IRobustRandom _random = default!;
         [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
         [Dependency] private readonly HumanoidSystem _humanoidSystem = default!;
+        [Dependency] private readonly SharedBlindingSystem _blindingSystem = default!;
 
-        private readonly Dictionary<MarkingCategories, Dictionary<long, MarkingPrototype>> _markingsIndex = new();
-        private readonly Dictionary<long, string> _speciesIndex = new();
-        private readonly Dictionary<MarkingCategories, long> _maxMarkingPointsPerCategory = new();
-        private readonly Dictionary<long, Sex> _sexIndex = new();
+        private readonly Dictionary<MarkingCategories, Dictionary<int, MarkingPrototype>> _markingsIndex = new();
+        private readonly Dictionary<int, string> _speciesIndex = new();
+        private readonly Dictionary<int, MutationPrototype> _mutationsIndex = new();
+        private readonly Dictionary<MarkingCategories, int> _maxMarkingPointsPerCategory = new();
+        private readonly Dictionary<int, Sex> _sexIndex = new();
+
+        private int _speciesMask = 1;
+        private int _sexMask = 1;
+        private int _skinColorMask = 1;
+        private int _eyeColorMask = 1;
+        private int _markingsMask = 1;
+        private readonly Dictionary<int, int> _mutationsMasks = new(); // going to generate a different mask for each one
 
         private const int SPECIES_GENE_INDEX = 0;
         private const int SEX_GENE_INDEX = 1;
@@ -52,16 +67,20 @@ namespace Content.Server.Genetics
 
         public override void Initialize()
         {
-            // SubscribeLocalEvent<FingerprintComponent, ContactInteractionEvent>(OnInteract);
-            // SubscribeLocalEvent<FingerprintComponent, ComponentInit>(OnInit);
-            
             PopulateSpeciesIndex();
             PopulateMarkingsIndex();
             PopulateMarkingPointsIndex();
             PopulateSexIndex();
+            PopulateMutationIndex();
+
+
 
             SubscribeLocalEvent<GeneticSequenceComponent, ComponentInit>(OnInit);
             SubscribeLocalEvent<HumanoidAppearanceUpdateEvent>(OnAppearanceUpdate);
+            SubscribeLocalEvent<ActivateMutationEvent>(OnMutationActivate);
+            SubscribeLocalEvent<DeactivateMutationEvent>(OnMutationDeactivate);
+
+            SubscribeLocalEvent<DamageResistanceMutationComponent, DamageModifyEvent>(OnDamageModify);
         }
 
         public void ModifyGenes(EntityUid uid, List<Gene> genes, GeneModificationMethod modificationMethod,
@@ -146,39 +165,6 @@ namespace Content.Server.Genetics
             return false;
         }
 
-        /// <summary>
-        /// Converts the given decimal number to a base 4 system using gene pairs.
-        /// </summary>
-        /// <param name="decimalNumber">The number to convert.</param>
-        /// <returns></returns>
-        private static string DecimalToGene(long decimalNumber)
-        {
-            const int radix = 4;
-            const int bitsInLong = 64;
-            const string digits = "ATGC";
-
-            if (decimalNumber == 0)
-                return "A";
-
-            int index = bitsInLong - 1;
-            long currentNumber = Math.Abs(decimalNumber);
-            char[] charArray = new char[bitsInLong];
-
-            while (currentNumber != 0)
-            {
-                int remainder = (int) (currentNumber % radix);
-                charArray[index--] = digits[remainder];
-                currentNumber = currentNumber / radix;
-            }
-
-            string result = new String(charArray, index + 1, bitsInLong - index - 1);
-            if (decimalNumber < 0)
-            {
-                result = "-" + result;
-            }
-
-            return result;
-        }
         private Gene ConvertToGene(String species)
         {
             var geneSegment = new List<Block>();
@@ -274,6 +260,11 @@ namespace Content.Server.Genetics
                 );
         }
 
+        private void GenerateMasks()
+        {
+
+        }
+
         private void PopulateSpeciesIndex()
         {
             _speciesIndex.Clear();
@@ -284,6 +275,18 @@ namespace Content.Server.Genetics
             {
                 var geneIndex = i++;
                 _speciesIndex.Add(geneIndex, species.ID);
+            }
+        }
+
+        private void PopulateMutationIndex()
+        {
+            _mutationsIndex.Clear();
+            var allMutations = _prototypeManager.EnumeratePrototypes<MutationPrototype>().ToImmutableList();
+            var i = 0;
+            foreach (var mutation in allMutations)
+            {
+                var geneIndex = i++;
+                _mutationsIndex.Add(geneIndex, mutation);
             }
         }
 
@@ -306,7 +309,6 @@ namespace Content.Server.Genetics
         {
             _sexIndex.Clear();
             var sexes = Enum.GetValues(typeof(Sex));
-            // var genesRequiredToRepresent = allSpecies.Count / 4;
             var i = 0;
             foreach (Sex sex in sexes)
             {
@@ -317,11 +319,10 @@ namespace Content.Server.Genetics
         private void PopulateMarkingsIndex()
         {
             _markingsIndex.Clear();
-            // var genesRequiredToRepresent = allSpecies.Count / 4;
 
             foreach (MarkingCategories markingCategory in Enum.GetValues(typeof(MarkingCategories)))
             {
-                var markingsIndexForCategory = new Dictionary<long, MarkingPrototype>();
+                var markingsIndexForCategory = new Dictionary<int, MarkingPrototype>();
                 var i = 0;
                 foreach (var prototype in _prototypeManager.EnumeratePrototypes<MarkingPrototype>())
                 {
@@ -331,12 +332,71 @@ namespace Content.Server.Genetics
             }
             
         }
-        
+
+        private void UpdateKnownMutations(EntityUid consoleUid, int mutationId)
+        {
+            if (TryComp(consoleUid, out GeneticsConsoleComponent? console))
+            {
+                var localizedName = Loc.GetString(_mutationsIndex[mutationId].LocalizationStringId);
+                if (!console.ResearchedMutations.ContainsKey(mutationId))
+                    console.ResearchedMutations.Add(mutationId, localizedName);
+            }
+        }
+
+        private void OnMutationActivate(ActivateMutationEvent ev)
+        {
+            if (!ev.Handled && TryComp(ev.Uid, out HumanoidComponent? targetHumanoid) && TryComp(ev.Uid, out GeneticSequenceComponent? geneSequence))
+            {
+                // not needed
+                foreach (var gene in geneSequence.Genes)
+                {
+                    if (gene.Type == GeneType.Mutation && gene.Blocks[0].Value == ev.Value) gene.Active = true;
+                }
+                var mutationProto = _mutationsIndex[ev.Value];
+                foreach (var effect in mutationProto.Effects)
+                    effect.Apply(ev.Uid, EntityManager, _prototypeManager, mutationProto.Strength);
+
+                if (ev.ConsoleUid != null) UpdateKnownMutations((EntityUid) ev.ConsoleUid, ev.Value);
+            }
+        }
+
+        private void OnMutationDeactivate(DeactivateMutationEvent ev)
+        {
+            if (!ev.Handled && TryComp(ev.Uid, out HumanoidComponent? targetHumanoid) && TryComp(ev.Uid, out GeneticSequenceComponent? geneSequence))
+            {
+                // not needed
+                foreach (var gene in geneSequence.Genes)
+                {
+                    if (gene.Type == GeneType.Mutation && gene.Blocks[0].Value == ev.Value) gene.Active = false;
+                }
+                var mutationProto = _mutationsIndex[ev.Value];
+                foreach (var effect in mutationProto.Effects)
+                    effect.Remove(ev.Uid, EntityManager, _prototypeManager, mutationProto.Strength);
+            }
+        }
+
+        private void OnDamageModify(EntityUid uid, DamageResistanceMutationComponent resistanceMutation, DamageModifyEvent ev)
+        {
+            var damage = ev.Damage;
+            foreach(var set in resistanceMutation.Modifiers.Values)
+            {
+                damage = DamageSpecifier.ApplyModifierSet(damage, set);
+            }
+            ev.Damage = damage;
+        }
+
         private void OnAppearanceUpdate(HumanoidAppearanceUpdateEvent ev)
         {
             if (!ev.Handled && TryComp(ev.Uid, out HumanoidComponent? targetHumanoid) && TryComp(ev.Uid, out GeneticSequenceComponent? geneSequence))
             {
                 geneSequence.Genes = GenerateGeneticSequence(targetHumanoid);
+
+                var random = new Random();
+                foreach (var gene in geneSequence.Genes)
+                {
+                    if (random.Next(2) == 1) gene.Damaged = true;
+                }
+
                 ev.Handled = true;
             }
             return;
@@ -371,6 +431,15 @@ namespace Content.Server.Genetics
                 geneSequence.Add(new Gene(GeneType.EyeColor, new List<Block>()));
             }
             geneSequence.AddRange(ConvertToGenes(targetHumanoid.CurrentMarkings));
+
+            foreach(var id in _mutationsIndex.Keys)
+            {
+                var block = new List<Block>();
+                block.Add(new Block(id));
+                var mutationGene = new Gene(GeneType.Mutation, block);
+                mutationGene.Active = false;
+                geneSequence.Add(mutationGene);
+            }
 
             return geneSequence;
         }

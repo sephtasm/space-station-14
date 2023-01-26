@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "license": "CC-BY-SA-3.0",
+  "copyright": "Taken from tgstation at commit https://github.com/tgstation/tgstation/commit/b65ecfda06dcbcf76c240fc99f6034e54f976317",
+  "size": {
+    "x": 32,
+    "y": 32
+  },
+  "states": [
+    {
+      "name": "infuser"
+    },
+    {
+      "name": "infuser_on",
+      "delays": [
+        [
+          0.1,
+          0.1,
+          0.1
+        ]
+      ]
+    },
+    {
+      "name": "infuser_maint"
+    },
+    {
+      "name": "infuser_open"
+    }
+  ]
+}

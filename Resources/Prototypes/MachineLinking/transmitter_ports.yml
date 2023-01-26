@@ -55,3 +55,8 @@
   name: signal-port-name-artifact-analyzer-sender
   description: signal-port-description-artifact-analyzer-sender
   defaultLinks: [ ArtifactAnalyzerReceiver ]
+  
+- type: transmitterPort
+  id: GenePodSender
+  name: signal-port-name-gene-pod-sender
+  description: signal-port-description-gene-pod-sender

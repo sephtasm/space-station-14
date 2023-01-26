@@ -15,6 +15,9 @@ using Content.Shared.Mobs.Systems;
 using Robust.Server.Containers;
 using Content.Server.Genetics.GenePod;
 using static Content.Shared.Genetics.GenePod.SharedGenePodComponent;
+using Content.Server.Genetics.Components;
+using Content.Server.Storage.Components;
+using Content.Shared.Atmos.Piping.Binary.Components;
 
 namespace Content.Server.Genetics
 {
@@ -25,6 +28,8 @@ namespace Content.Server.Genetics
         [Dependency] private readonly ClimbSystem _climbSystem = default!;
         [Dependency] private readonly MobStateSystem _mobStateSystem = default!;
         [Dependency] private readonly ContainerSystem _containerSystem = default!;
+        [Dependency] private readonly GeneticsConsoleSystem _consoleSystem = default!;
+        [Dependency] private readonly SharedAppearanceSystem _appearanceSystem = default!;
 
         private const float UpdateRate = 1f;
         private float _updateDif;
@@ -49,7 +54,7 @@ namespace Content.Server.Genetics
         {
             base.Initialize();
             scannerComponent.BodyContainer = _containerSystem.EnsureContainer<ContainerSlot>(uid, $"genePod-bodyContainer");
-            _signalSystem.EnsureReceiverPorts(uid, GenePodComponent.ScannerPort);
+            _signalSystem.EnsureReceiverPorts(uid, GenePodComponent.PodPort);
         }
 
         private void OnRelayMovement(EntityUid uid, GenePodComponent scannerComponent, ref ContainerRelayMovementEntityEvent args)
@@ -117,6 +122,7 @@ namespace Content.Server.Genetics
 
         private void HandleDragDropOn(EntityUid uid, GenePodComponent scannerComponent, DragDropEvent args)
         {
+            // TODO: this action succeeds before the action bad fills up, removing the opportunity for the target to resist. medical scanner also does this
             InsertBody(uid, args.Dragged, scannerComponent);
         }
 
@@ -127,12 +133,12 @@ namespace Content.Server.Genetics
 
         private void OnAnchorChanged(EntityUid uid, GenePodComponent component, ref AnchorStateChangedEvent args)
         {
-            if (component.ConnectedConsole == null || !TryComp<CloningConsoleComponent>(component.ConnectedConsole, out var console))
+            if (component.ConnectedConsole == null || !TryComp<GeneticsConsoleComponent>(component.ConnectedConsole, out var console))
                 return;
 
             if (args.Anchored)
             {
-                // _cloningConsoleSystem.RecheckConnections(component.ConnectedConsole.Value, console.CloningPod, uid, console);
+                _consoleSystem.RecheckConnections((EntityUid) component.ConnectedConsole, uid, console);
                 return;
             }
             //_cloningConsoleSystem.UpdateUserInterface(console);
@@ -174,11 +180,11 @@ namespace Content.Server.Genetics
             return GenePodStatus.Unoccupied;
         }
 
-        private void UpdateAppearance(EntityUid uid, GenePodComponent scannerComponent)
+        private void UpdateAppearance(EntityUid uid, GenePodComponent component)
         {
-            if (TryComp<AppearanceComponent>(scannerComponent.Owner, out var appearance))
+            if (TryComp<AppearanceComponent>(component.Owner, out var appearance))
             {
-                appearance.SetData(GenePodVisuals.Status, GetStatus(scannerComponent));
+                _appearanceSystem.SetData(uid, GenePodVisuals.Status, GetStatus(component));
             }
         }
 
@@ -198,43 +204,45 @@ namespace Content.Server.Genetics
             }
         }
 
-        public void InsertBody(EntityUid uid, EntityUid user, GenePodComponent? scannerComponent)
+        public void InsertBody(EntityUid uid, EntityUid user, GenePodComponent? component)
         {
-            if (!Resolve(uid, ref scannerComponent))
+            if (!Resolve(uid, ref component))
                 return;
 
-            if (scannerComponent.BodyContainer.ContainedEntity != null)
+            if (component.BodyContainer.ContainedEntity != null)
                 return;
 
             if (!TryComp<MobStateComponent>(user, out var comp))
                 return;
 
-            scannerComponent.BodyContainer.Insert(user);
-            UpdateAppearance(scannerComponent.Owner, scannerComponent);
+            component.BodyContainer.Insert(user);
+            UpdateAppearance(component.Owner, component);
         }
 
-        public void EjectBody(EntityUid uid, GenePodComponent? scannerComponent)
+        public void EjectBody(EntityUid uid, GenePodComponent? component)
         {
-            if (!Resolve(uid, ref scannerComponent))
+            if (!Resolve(uid, ref component))
                 return;
 
-            if (scannerComponent.BodyContainer.ContainedEntity is not {Valid: true} contained) return;
+            if (component.BodyContainer.ContainedEntity is not {Valid: true} contained) return;
 
-            scannerComponent.BodyContainer.Remove(contained);
+            component.BodyContainer.Remove(contained);
+            component.LastScannedBody = null;
+            component.Scanning = false;
             _climbSystem.ForciblySetClimbing(contained, uid);
-            UpdateAppearance(scannerComponent.Owner, scannerComponent);
+            UpdateAppearance(component.Owner, component);
         }
 
         private void OnRefreshParts(EntityUid uid, GenePodComponent component, RefreshPartsEvent args)
         {
-            var ratingFail = args.PartRatings[component.MachinePartDamageReduction];
+            var ratingDamageReduction = args.PartRatings[component.MachinePartDamageReduction];
 
-            component.BaseRadiationDamageOnRepair = MathF.Pow(component.PartRatingDamageReductionMultiplier, ratingFail - 1);
+            component.DamageReductionMultiplier = MathF.Pow(component.PartRatingDamageReductionMultiplier, ratingDamageReduction - 1);
         }
 
         private void OnUpgradeExamine(EntityUid uid, GenePodComponent component, UpgradeExamineEvent args)
         {
-            args.AddPercentageUpgrade("gene-pod-upgrade-cloning", component.BaseRadiationDamageOnRepair);
+            args.AddPercentageUpgrade("gene-pod-upgrade-damage-reduction", component.DamageReductionMultiplier);
         }
     }
 }
