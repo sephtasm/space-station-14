@@ -6,8 +6,10 @@ using Content.Shared.Humanoid.Prototypes;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Preferences;
 using Content.Shared.Verbs;
+using Linguini.Syntax.Ast;
 using Robust.Shared.GameObjects.Components.Localization;
 using Robust.Shared.Prototypes;
+using static Content.Shared.Humanoid.HumanoidAppearanceState;
 
 namespace Content.Server.Humanoid;
 
@@ -119,11 +121,8 @@ public sealed partial class HumanoidAppearanceSystem : SharedHumanoidAppearanceS
             return;
         }
 
-        targetHumanoid.Species = sourceHumanoid.Species;
-        targetHumanoid.SkinColor = sourceHumanoid.SkinColor;
-        SetSex(target, sourceHumanoid.Sex, false, targetHumanoid);
-        targetHumanoid.CustomBaseLayers = new(sourceHumanoid.CustomBaseLayers);
-        targetHumanoid.MarkingSet = new(sourceHumanoid.MarkingSet);
+        DoSetAppearance(target, sourceHumanoid.Species, sourceHumanoid.SkinColor, sourceHumanoid.Sex, new(sourceHumanoid.CustomBaseLayers),
+            new(sourceHumanoid.MarkingSet), targetHumanoid);
 
         targetHumanoid.Gender = sourceHumanoid.Gender;
         if (TryComp<GrammarComponent>(target, out var grammar))
@@ -132,6 +131,40 @@ public sealed partial class HumanoidAppearanceSystem : SharedHumanoidAppearanceS
         }
 
         Dirty(targetHumanoid);
+    }
+
+    /// <summary>
+    /// Set appearance using the given values. Be sure to perform a copy of any collections passed into this method if needed, so that the references don't get tangled between two components.
+    /// This will not update the gender of the target.
+    /// </summary>
+    /// <param name="target"></param> The target entity Uid which is associated to the appearance component
+    /// <param name="species"></param> the new species
+    /// <param name="skinColor"></param> the new skin color
+    /// <param name="sex"></param> the new sex
+    /// <param name="customBaseLayers"></param> any custom base layers
+    /// <param name="markingSet"></param> the new markings
+    /// <param name="targetHumanoid"></param> the target humanoid appearance component associated with the target entity
+    public void SetAppearance(EntityUid target, string species, Color skinColor, Sex sex, Dictionary<HumanoidVisualLayers, CustomBaseLayerInfo> customBaseLayers,
+        MarkingSet markingSet, HumanoidAppearanceComponent? targetHumanoid = null)
+    {
+        if (!Resolve(target, ref targetHumanoid))
+        {
+            return;
+        }
+        DoSetAppearance(target, species, skinColor, sex, customBaseLayers,
+            markingSet, targetHumanoid);
+    }
+
+    private void DoSetAppearance(EntityUid target, string species, Color skinColor, Sex sex, Dictionary<HumanoidVisualLayers, CustomBaseLayerInfo> customBaseLayers,
+        MarkingSet markingSet, HumanoidAppearanceComponent targetHumanoid)
+    {
+        targetHumanoid.Species = species;
+        targetHumanoid.SkinColor = skinColor;
+        SetSex(target, sex, false, targetHumanoid);
+        targetHumanoid.CustomBaseLayers = customBaseLayers;
+        targetHumanoid.MarkingSet = markingSet;
+
+        RaiseLocalEvent(new HumanoidAppearanceUpdateEvent(target));
     }
 
     /// <summary>

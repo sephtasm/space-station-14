@@ -68,6 +68,15 @@ namespace Content.Server.Genetics.GenePod
         [DataField("sequencingFinishedSound")]
         public readonly SoundSpecifier SequencingFinishedSound = new SoundPathSpecifier("/Audio/Machines/scan_finish.ogg");
 
+        [DataField("repairGeneSound")]
+        public readonly SoundSpecifier RepairGeneSound = new SoundPathSpecifier("/Audio/Items/Medical/generic_healing_end.ogg");
+
+        [DataField("editGeneSuccessSound")]
+        public readonly SoundSpecifier EditGeneSuccessSound = new SoundPathSpecifier("/Audio/Items/beep.ogg");
+
+        [DataField("editGeneFailedSound")]
+        public readonly SoundSpecifier EditGeneFailedSound = new SoundPathSpecifier("/Audio/Machines/custom_deny.ogg");
+
         public override bool DragDropOn(DragDropEvent eventArgs)
         {
             return true;

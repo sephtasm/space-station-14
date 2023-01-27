@@ -1,7 +1,7 @@
 genetics-console-ui-window-title = Genetics Console
 
 genetics-console-ui-window-tab-gene-repair = Genetic Repair
-genetics-console-ui-window-tab-mutations = Mutations
+genetics-console-ui-window-tab-mutations = Dormant Mutations
 
 genetics-console-ui-window-ready-to-scan = Patient detected. Press to begin sequencing.
 

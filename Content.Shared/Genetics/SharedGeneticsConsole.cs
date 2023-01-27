@@ -14,14 +14,14 @@ namespace Content.Shared.Genetics.GeneticsConsole
         public readonly bool PodInRange;
         public readonly TimeSpan TimeRemaining;
         public readonly TimeSpan TotalTime;
-        public readonly List<Gene> SequencedGenes;
+        public readonly List<GeneDisplay> SequencedGenes;
         public readonly Dictionary<long, string> KnownMutations;
         public readonly Gene? ActivationTargetGene;
         public readonly GenePuzzle? Puzzle;
         public readonly bool ForceUpdate;
 
         public GeneticsConsoleBoundUserInterfaceState(EntityUid? podBodyUid, PodStatus podStatus, bool podConnected, bool podInRange,
-            TimeSpan timeRemaining, TimeSpan totalTime, List<Gene> sequencedGenes, Dictionary<long, string> knownMutations,
+            TimeSpan timeRemaining, TimeSpan totalTime, List<GeneDisplay> sequencedGenes, Dictionary<long, string> knownMutations,
             Gene? activationTargetGene, GenePuzzle? puzzle, bool forceUpdate)
         {
             PodBodyUid = podBodyUid;
@@ -165,14 +165,50 @@ namespace Content.Shared.Genetics.GeneticsConsole
     public sealed class PuzzleChecker
     {
         public static readonly Dictionary<Base, string> BaseToChar = new Dictionary<Base, string>
+        {
+            { Base.A, "A" },
+            { Base.T, "T" },
+            { Base.G, "G" },
+            { Base.C, "C" },
+            { Base.Unknown, "?" },
+            { Base.Empty, " " }
+        };
+
+
+        /// <summary>
+        /// Converts the given decimal number to a base 4 system using gene pairs.
+        /// </summary>
+        /// <param name="decimalNumber">The number to convert.</param>
+        /// <returns></returns>
+        public static string DecimalToGene(long decimalNumber)
+        {
+            const int radix = 4;
+            const int bitsInLong = 64;
+            const string digits = "ATGC";
+
+            if (decimalNumber == 0)
+                return "A";
+
+            int index = bitsInLong - 1;
+            long currentNumber = Math.Abs(decimalNumber);
+            char[] charArray = new char[bitsInLong];
+
+            while (currentNumber != 0)
             {
-                { Base.A, "A" },
-                { Base.T, "T" },
-                { Base.G, "G" },
-                { Base.C, "C" },
-                { Base.Unknown, "?" },
-                { Base.Empty, " " }
-            };
+                int remainder = (int) (currentNumber % radix);
+                charArray[index--] = digits[remainder];
+                currentNumber = currentNumber / radix;
+            }
+
+            string result = new string(charArray, index + 1, bitsInLong - index - 1);
+            if (decimalNumber < 0)
+            {
+                result = "-" + result;
+            }
+
+            return result;
+        }
+
 
         public static List<BasePair> CombineBlocks(List<List<BasePair>> blocks)
         {
@@ -226,6 +262,12 @@ namespace Content.Shared.Genetics.GeneticsConsole
             }
 
             return true;
+        }
+
+        public static string CalculateSubmittedSequence(List<List<BasePair>> blocks)
+        {
+            var combined = CombineBlocks(blocks);
+            return string.Join("", combined.Select(pair => BaseToChar[pair.TopAssigned]).ToList());
         }
 
         public static int CalculatePuzzleSolutionDiff(GenePuzzle puzzle)

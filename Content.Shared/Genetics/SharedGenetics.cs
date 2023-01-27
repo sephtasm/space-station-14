@@ -71,6 +71,20 @@ namespace Content.Shared.Genetics
     }
 
     [Serializable, NetSerializable]
+    public sealed class GeneDisplay
+    {
+        public GeneDisplay(Gene gene, string display)
+        {
+            Gene = gene;
+            Display = display;
+        }
+
+        public Gene Gene { get; set; }
+        public string Display { get; set; }
+
+    }
+
+    [Serializable, NetSerializable]
     public sealed class Gene
     {
         public Gene(GeneType type, List<Block> blocks, MarkingCategories? markingCategory = null, bool active = true, bool damaged = false)
@@ -95,18 +109,20 @@ namespace Content.Shared.Genetics
     [Serializable, NetSerializable]
     public sealed class Block
     {
-        public Block(int value, BlockType blockType = BlockType.Primary)
+        public Block(uint value, string display, BlockType blockType = BlockType.Primary)
         {
             Type = blockType;
             Value = value;
+            Display = display;
         }
         public BlockType Type { get; set; } = BlockType.Primary;
-        public int Value { get; set; }
+        public uint Value { get; set; }
+        public string Display { get; set; }
     }
 
     public abstract class MutationChangedEvent : HandledEntityEventArgs
     {
-        public MutationChangedEvent(EntityUid uid, int value, EntityUid? consoleUid)
+        public MutationChangedEvent(EntityUid uid, uint value, EntityUid? consoleUid)
         {
             Uid = uid;
             Value = value;
@@ -116,15 +132,15 @@ namespace Content.Shared.Genetics
         public EntityUid Uid { get; }
 
         public EntityUid? ConsoleUid { get; }
-        public int Value { get; }
+        public uint Value { get; }
     }
 
     public sealed class ActivateMutationEvent : MutationChangedEvent
     {
-        public ActivateMutationEvent(EntityUid uid, int value, EntityUid? consoleUid) : base(uid, value, consoleUid) { }
+        public ActivateMutationEvent(EntityUid uid, uint value, EntityUid? consoleUid) : base(uid, value, consoleUid) { }
     }
     public sealed class DeactivateMutationEvent : MutationChangedEvent
     {
-        public DeactivateMutationEvent(EntityUid uid, int value, EntityUid? consoleUid) : base(uid, value, consoleUid) { }
+        public DeactivateMutationEvent(EntityUid uid, uint value, EntityUid? consoleUid) : base(uid, value, consoleUid) { }
     }
 }

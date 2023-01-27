@@ -219,4 +219,16 @@ public abstract class SharedHumanoidAppearanceSystem : EntitySystem
             Dirty(humanoid);
         }
     }
+
+    /// <summary>
+    ///     Event raised when a humanoid's appearance is updated.
+    /// </summary>
+    public sealed class HumanoidAppearanceUpdateEvent : HandledEntityEventArgs
+    {
+        public HumanoidAppearanceUpdateEvent(EntityUid uid)
+        {
+            Uid = uid;
+        }
+        public EntityUid Uid { get; }
+    }
 }

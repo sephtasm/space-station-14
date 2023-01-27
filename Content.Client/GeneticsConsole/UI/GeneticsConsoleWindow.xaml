@@ -4,8 +4,8 @@
                       xmlns:xe="clr-namespace:Content.Client.UserInterface.XamlExtensions"
                       xmlns:customControls="clr-namespace:Content.Client.Administration.UI.CustomControls"
                       Title="{Loc 'genetics-console-menu-title'}"
-                      MinSize="620 280"
-                      SetSize="620 280">
+                      MinSize="720 360"
+                      SetSize="720 360">
     <BoxContainer Orientation="Horizontal" HorizontalExpand="True" VerticalExpand="True">
         <!-- Error Messages and Status -->
         <BoxContainer Name="IntroScreen" Orientation="Horizontal" VerticalExpand="True"  HorizontalExpand="True" Align="Center">

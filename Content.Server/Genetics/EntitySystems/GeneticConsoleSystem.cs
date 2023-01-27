@@ -8,17 +8,12 @@ using Robust.Shared.Timing;
 using Content.Server.UserInterface;
 using Content.Shared.MachineLinking.Events;
 using Content.Server.MachineLinking.Components;
-using Content.Server.Cloning.Components;
-using Content.Server.Cloning;
-using Content.Server.Xenoarchaeology.Equipment.Components;
 using Content.Shared.Genetics;
-using Content.Server.Humanoid;
-using Content.Shared.Humanoid;
 using Content.Shared.Damage;
 using Robust.Shared.Prototypes;
 using Content.Shared.Damage.Prototypes;
-using System;
 using Robust.Shared.Utility;
+using System.Collections.Generic;
 
 namespace Content.Server.Genetics
 {
@@ -31,6 +26,7 @@ namespace Content.Server.Genetics
         [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
 
         private const string GeneRepairDamageType = "Radiation";
+        private const string GeneRepairHealingGroup = "Genetic";
         private const string MutationDamageType = "Cellular";
 
         private Dictionary<Gene, GenePuzzle> _puzzles = new();
@@ -136,7 +132,7 @@ namespace Content.Server.Genetics
             EntityUid? body = null;
             var timeRemaining = TimeSpan.Zero;
             var totalTime = TimeSpan.Zero;
-            List<Gene> geneSequence = new();
+            List<GeneDisplay> geneSequence = new();
             if (component.GenePod != null && TryComp<GenePodComponent>(component.GenePod, out var genePod))
             {
                 podConnected = true;
@@ -156,7 +152,7 @@ namespace Content.Server.Genetics
                     podStatus = PodStatus.ScanComplete;
                     if (TryComp<GeneticSequenceComponent>(genePod.LastScannedBody, out var geneticSequence))
                     {
-                        geneSequence = geneticSequence.Genes;
+                        geneSequence = GenerateDisplayForAllGenes(geneticSequence.Genes);
                     }
                     else
                     {
@@ -171,6 +167,34 @@ namespace Content.Server.Genetics
                 component.ResearchedMutations, component.TargetActivationGene, component.Puzzle, forceUpdate);
             var bui = _ui.GetUi(uid, GeneticsConsoleUiKey.Key);
             _ui.SetUiState(bui, state);
+        }
+
+        public List<GeneDisplay> GenerateDisplayForAllGenes(List<Gene> genes)
+        {
+
+            List<GeneDisplay> display = new();
+            foreach (var gene in genes)
+            {
+                if (gene.Type != GeneType.Mutation || gene.Active)
+                {
+                    display.Add(new GeneDisplay(gene, string.Join(" ", gene.Blocks.Select(b => b.Display))));
+                }
+                else
+                {
+                    // inactive mutation
+                    if (!_puzzles.ContainsKey(gene))
+                    {
+                        var solution = gene.Blocks[0].Display;
+                        _puzzles[gene] = GeneratePuzzle(solution);
+                    }
+
+                    List<List<BasePair>> allBPs = _puzzles[gene].UsedBlocks.Concat(_puzzles[gene].UnusedBlocks).ToList();
+                    display.Add(new GeneDisplay(gene, PuzzleChecker.CalculateSubmittedSequence(allBPs)));
+                }
+                
+            }
+
+            return display;
         }
 
         public override void Update(float frameTime)
@@ -196,6 +220,7 @@ namespace Content.Server.Genetics
 
             pod.Scanning = false;
             pod.LastScannedBody = pod.BodyContainer.ContainedEntity;
+
             _audio.PlayPvs(pod.SequencingFinishedSound, uid);
 
             if (pod.ConnectedConsole != null)
@@ -235,8 +260,15 @@ namespace Content.Server.Genetics
                 var dmg = new DamageSpecifier(_prototypeManager.Index<DamageTypePrototype>(GeneRepairDamageType), genePod.BaseRadiationDamageOnRepair * genePod.DamageReductionMultiplier);
                 var actual = _damageableSystem.TryChangeDamage(genePod.BodyContainer.ContainedEntity, dmg, origin: component.GenePod);
 
+                var totalTaken = damageable.DamagePerGroup[GeneRepairHealingGroup];
+                var damagedGenes = geneticSequence.Genes.Where(g => g.Damaged).ToList();
+
+                var healedAmt = - (totalTaken / damagedGenes.Count);
+                var heal = new DamageSpecifier(_prototypeManager.Index<DamageGroupPrototype>(GeneRepairHealingGroup), healedAmt);
+                _damageableSystem.TryChangeDamage(genePod.BodyContainer.ContainedEntity, heal, ignoreResistances: true, origin: component.GenePod);
             }
 
+            _audio.PlayPvs(genePod.RepairGeneSound, uid);
             geneticSequence.Genes[args.Index].Damaged = false;
             UpdateUserInterface(uid, component, true);
         }
@@ -252,7 +284,7 @@ namespace Content.Server.Genetics
 
             if (!_puzzles.ContainsKey(gene))
             {
-                var solution = "CATGGCCTGCAAGCAT";
+                var solution = gene.Blocks[0].Display;
                 _puzzles[gene] = GeneratePuzzle(solution);
             }
             component.Puzzle = _puzzles[gene];
@@ -343,6 +375,11 @@ namespace Content.Server.Genetics
                 var mutationId = component.TargetActivationGene.Blocks[0].Value;
                 RaiseLocalEvent(new ActivateMutationEvent((EntityUid) genePod.BodyContainer.ContainedEntity!, mutationId, uid));
                 component.TargetActivationGene = null;
+                _audio.PlayPvs(genePod.EditGeneSuccessSound, uid);
+            }
+            else
+            {
+                _audio.PlayPvs(genePod.EditGeneFailedSound, uid);
             }
             UpdateUserInterface(uid, component, true);
         }
