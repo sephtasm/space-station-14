@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Server.Atmos.Components;
 using Content.Shared.CCVar;
 using Content.Shared.Damage;
 using Content.Shared.Explosion;
@@ -188,12 +189,14 @@ public sealed partial class ExplosionSystem : EntitySystem
         MapGridComponent grid,
         Vector2i tile,
         float throwForce,
+        float fireStacks,
         DamageSpecifier damage,
         MapCoordinates epicenter,
         HashSet<EntityUid> processed,
         string id,
         EntityQuery<TransformComponent> xformQuery,
         EntityQuery<DamageableComponent> damageQuery,
+        EntityQuery<FlammableComponent> flammableQuery,
         EntityQuery<PhysicsComponent> physicsQuery,
         LookupFlags flags)
     {
@@ -213,7 +216,7 @@ public sealed partial class ExplosionSystem : EntitySystem
         // process those entities
         foreach (var xform in list)
         {
-            ProcessEntity(xform.Owner, epicenter, damage, throwForce, id, damageQuery, physicsQuery, xform);
+            ProcessEntity(xform.Owner, epicenter, damage, fireStacks, throwForce, id, damageQuery, flammableQuery, physicsQuery, xform);
         }
 
         // process anchored entities
@@ -222,7 +225,7 @@ public sealed partial class ExplosionSystem : EntitySystem
         foreach (var entity in anchoredList)
         {
             processed.Add(entity);
-            ProcessEntity(entity, epicenter, damage, throwForce, id, damageQuery, physicsQuery);
+            ProcessEntity(entity, epicenter, damage, fireStacks, throwForce, id, damageQuery, flammableQuery, physicsQuery);
         }
 
         // Walls and reinforced walls will break into girders. These girders will also be considered turf-blocking for
@@ -256,7 +259,7 @@ public sealed partial class ExplosionSystem : EntitySystem
         {
             // Here we only throw, no dealing damage. Containers n such might drop their entities after being destroyed, but
             // they should handle their own damage pass-through, with their own damage reduction calculation.
-            ProcessEntity(xform.Owner, epicenter, null, throwForce, id, damageQuery, physicsQuery, xform);
+            ProcessEntity(xform.Owner, epicenter, null, throwForce, fireStacks, id, damageQuery, flammableQuery, physicsQuery, xform);
         }
 
         return !tileBlocked;
@@ -288,12 +291,14 @@ public sealed partial class ExplosionSystem : EntitySystem
         Matrix3 invSpaceMatrix,
         Vector2i tile,
         float throwForce,
+        float fireStacks,
         DamageSpecifier damage,
         MapCoordinates epicenter,
         HashSet<EntityUid> processed,
         string id,
         EntityQuery<TransformComponent> xformQuery,
         EntityQuery<DamageableComponent> damageQuery,
+        EntityQuery<FlammableComponent> flammableQuery,
         EntityQuery<PhysicsComponent> physicsQuery,
         LookupFlags flags)
     {
@@ -311,7 +316,7 @@ public sealed partial class ExplosionSystem : EntitySystem
         foreach (var xform in state.Item1)
         {
             processed.Add(xform.Owner);
-            ProcessEntity(xform.Owner, epicenter, damage, throwForce, id, damageQuery, physicsQuery, xform);
+            ProcessEntity(xform.Owner, epicenter, damage, fireStacks, throwForce, id, damageQuery, flammableQuery, physicsQuery, xform);
         }
 
         if (throwForce <= 0)
@@ -325,7 +330,7 @@ public sealed partial class ExplosionSystem : EntitySystem
 
         foreach (var xform in list)
         {
-            ProcessEntity(xform.Owner, epicenter, null, throwForce, id, damageQuery, physicsQuery, xform);
+            ProcessEntity(xform.Owner, epicenter, null, fireStacks, throwForce, id, damageQuery, flammableQuery, physicsQuery, xform);
         }
     }
 
@@ -369,9 +374,11 @@ public sealed partial class ExplosionSystem : EntitySystem
         EntityUid uid,
         MapCoordinates epicenter,
         DamageSpecifier? damage,
+        float fireStacks,
         float throwForce,
         string id,
         EntityQuery<DamageableComponent> damageQuery,
+        EntityQuery<FlammableComponent> flammableQuery,
         EntityQuery<PhysicsComponent> physicsQuery,
         TransformComponent? xform = null)
     {
@@ -408,8 +415,13 @@ public sealed partial class ExplosionSystem : EntitySystem
         }
 
         // TODO EXPLOSION puddle / flammable ignite?
+        if (fireStacks > 0 && flammableQuery.TryGetComponent(uid, out var flammable))
+        {
+            flammable.FireStacks += fireStacks;
+            _flammableSystem.Ignite(uid, flammable);
+        }
 
-        // TODO EXPLOSION deaf/ear damage? other explosion effects?
+            // TODO EXPLOSION deaf/ear damage? other explosion effects?
     }
 
     /// <summary>
@@ -533,6 +545,7 @@ sealed class Explosion
 
     // Variables used for enumerating over tiles, grids, etc
     private DamageSpecifier _currentDamage = default!;
+    private float _fireStacks;
     private BroadphaseComponent _currentLookup = default!;
     private MapGridComponent? _currentGrid;
     private float _currentIntensity;
@@ -550,6 +563,7 @@ sealed class Explosion
     private readonly EntityQuery<TransformComponent> _xformQuery;
     private readonly EntityQuery<PhysicsComponent> _physicsQuery;
     private readonly EntityQuery<DamageableComponent> _damageQuery;
+    private readonly EntityQuery<FlammableComponent> _flammableQuery;
 
     /// <summary>
     ///     Total area that the explosion covers.
@@ -590,6 +604,7 @@ sealed class Explosion
         Matrix3 spaceMatrix,
         int area,
         float tileBreakScale,
+        float fireStacks,
         int maxTileBreak,
         bool canCreateVacuum,
         IEntityManager entMan,
@@ -604,6 +619,7 @@ sealed class Explosion
         Area = area;
 
         _tileBreakScale = tileBreakScale;
+        _fireStacks = fireStacks;
         _maxTileBreak = maxTileBreak;
         _canCreateVacuum = canCreateVacuum;
         _entMan = entMan;
@@ -616,6 +632,7 @@ sealed class Explosion
         _xformQuery = entMan.GetEntityQuery<TransformComponent>();
         _physicsQuery = entMan.GetEntityQuery<PhysicsComponent>();
         _damageQuery = entMan.GetEntityQuery<DamageableComponent>();
+        _flammableQuery = entMan.GetEntityQuery<FlammableComponent>();
 
         if (spaceData != null)
         {
@@ -749,12 +766,14 @@ sealed class Explosion
                     _currentGrid,
                     _currentEnumerator.Current,
                     _currentThrowForce,
+                    _fireStacks,
                     _currentDamage,
                     Epicenter,
                     ProcessedEntities,
                     ExplosionType.ID,
                     _xformQuery,
                     _damageQuery,
+                    _flammableQuery,
                     _physicsQuery,
                     _flags);
 
@@ -770,12 +789,14 @@ sealed class Explosion
                     _invSpaceMatrix,
                     _currentEnumerator.Current,
                     _currentThrowForce,
+                    _fireStacks,
                     _currentDamage,
                     Epicenter,
                     ProcessedEntities,
                     ExplosionType.ID,
                     _xformQuery,
                     _damageQuery,
+                    _flammableQuery,
                     _physicsQuery,
                     _flags);
             }

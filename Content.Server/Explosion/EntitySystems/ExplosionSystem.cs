@@ -1,6 +1,7 @@
 using System.Linq;
 using Content.Server.Administration.Logs;
 using Content.Server.Atmos.Components;
+using Content.Server.Atmos.EntitySystems;
 using Content.Server.Explosion.Components;
 using Content.Server.NodeContainer.EntitySystems;
 using Content.Server.NPC.Pathfinding;
@@ -34,6 +35,7 @@ public sealed partial class ExplosionSystem : EntitySystem
 
     [Dependency] private readonly SharedAppearanceSystem _appearance = default!;
     [Dependency] private readonly DamageableSystem _damageableSystem = default!;
+    [Dependency] private readonly FlammableSystem _flammableSystem = default!;
     [Dependency] private readonly NodeGroupSystem _nodeGroupSystem = default!;
     [Dependency] private readonly PathfindingSystem _pathfindingSystem = default!;
     [Dependency] private readonly SharedCameraRecoilSystem _recoilSystem = default!;
@@ -144,6 +146,7 @@ public sealed partial class ExplosionSystem : EntitySystem
             explosive.IntensitySlope,
             explosive.MaxIntensity,
             explosive.TileBreakScale,
+            explosive.FireStacks,
             explosive.MaxTileBreak,
             explosive.CanCreateVacuum,
             user);
@@ -213,6 +216,7 @@ public sealed partial class ExplosionSystem : EntitySystem
         float slope,
         float maxTileIntensity,
         float tileBreakScale = 1f,
+        float fireStacks = 0f,
         int maxTileBreak = int.MaxValue,
         bool canCreateVacuum = true,
         EntityUid? user = null,
@@ -221,7 +225,7 @@ public sealed partial class ExplosionSystem : EntitySystem
         var pos = Transform(uid).MapPosition;
 
 
-        QueueExplosion(pos, typeId, totalIntensity, slope, maxTileIntensity, tileBreakScale, maxTileBreak, canCreateVacuum, addLog: false);
+        QueueExplosion(pos, typeId, totalIntensity, slope, maxTileIntensity, tileBreakScale, fireStacks, maxTileBreak, canCreateVacuum, addLog: false);
 
         if (!addLog)
             return;
@@ -243,6 +247,7 @@ public sealed partial class ExplosionSystem : EntitySystem
         float slope,
         float maxTileIntensity,
         float tileBreakScale = 1f,
+        float fireStacks = 0f,
         int maxTileBreak = int.MaxValue,
         bool canCreateVacuum = true,
         bool addLog = false)
@@ -260,7 +265,7 @@ public sealed partial class ExplosionSystem : EntitySystem
             _adminLogger.Add(LogType.Explosion, LogImpact.High, $"Explosion spawned at {epicenter:coordinates} with intensity {totalIntensity} slope {slope}");
 
         _explosionQueue.Enqueue(() => SpawnExplosion(epicenter, type, totalIntensity,
-            slope, maxTileIntensity, tileBreakScale, maxTileBreak, canCreateVacuum));
+            slope, maxTileIntensity, tileBreakScale, fireStacks, maxTileBreak, canCreateVacuum));
     }
 
     /// <summary>
@@ -274,6 +279,7 @@ public sealed partial class ExplosionSystem : EntitySystem
         float slope,
         float maxTileIntensity,
         float tileBreakScale,
+        float fireStacks,
         int maxTileBreak,
         bool canCreateVacuum)
     {
@@ -309,6 +315,7 @@ public sealed partial class ExplosionSystem : EntitySystem
             spaceMatrix,
             area,
             tileBreakScale,
+            fireStacks,
             maxTileBreak,
             canCreateVacuum,
             EntityManager,

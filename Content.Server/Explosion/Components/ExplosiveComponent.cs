@@ -60,6 +60,13 @@ public sealed class ExplosiveComponent : Component
     public float TileBreakScale = 1f;
 
     /// <summary>
+    ///     How many fire stacks are applied to flammable objects inside the explosion.
+    /// </summary>
+    [ViewVariables(VVAccess.ReadWrite)]
+    [DataField("fireStacks")]
+    public float FireStacks = 0f;
+
+    /// <summary>
     ///     Maximum number of times that an explosive can break a tile. Currently, for normal space stations breaking a
     ///     tile twice will generally result in a vacuum.
     /// </summary>
