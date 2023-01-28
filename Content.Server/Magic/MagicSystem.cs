@@ -173,8 +173,12 @@ public sealed class MagicSystem : EntitySystem
                 ? pos.WithEntityId(grid.Owner, EntityManager)
                 : new(_mapManager.GetMapEntityId(mapPos.MapId), mapPos.Position);
 
+            var fromMap = mapPos.Position;
+            var toMap = ev.Target.ToMapPos(EntityManager);
+            var mapDirection = toMap - fromMap;
+
             var ent = Spawn(ev.Prototype, spawnCoords);
-            _gunSystem.ShootProjectile(ent, ev.Target.Position - mapPos.Position, userVelocity, ev.Performer);
+            _gunSystem.ShootProjectile(ent, mapDirection, userVelocity, ev.Performer);
         }
     }
 

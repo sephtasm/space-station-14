@@ -101,7 +101,7 @@
   id: PyrokineticBlast
   name: action-name-spell-pyrokinetic-blast
   description: action-description-spell-pyrokinetic-blast
-  useDelay: 30
+  useDelay: 5
   itemIconStyle: BigAction
   checkCanAccess: false
   range: 60
@@ -126,8 +126,9 @@
     layers:
     - state: fireball
   - type: Explosive
-    explosionType: Default
-    maxIntensity: 25
+    explosionType: Inferno
+    maxIntensity: 15
     intensitySlope: 5
-    totalIntensity: 125
+    totalIntensity: 50
     maxTileBreak: 0
+    fireStacks: 3
