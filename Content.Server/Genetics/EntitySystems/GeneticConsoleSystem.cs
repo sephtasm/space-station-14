@@ -14,16 +14,23 @@ using Robust.Shared.Prototypes;
 using Content.Shared.Damage.Prototypes;
 using Robust.Shared.Utility;
 using System.Collections.Generic;
+using Content.Server.Xenoarchaeology.Equipment.Components;
+using Content.Shared.Popups;
+using Content.Server.Paper;
 
 namespace Content.Server.Genetics
 {
     public sealed class GeneticsConsoleSystem : EntitySystem
     {
-        [Dependency] private readonly IGameTiming _timing = default!;
-        [Dependency] private readonly UserInterfaceSystem _ui = default!;
         [Dependency] private readonly SharedAudioSystem _audio = default!;
         [Dependency] private readonly DamageableSystem _damageableSystem = default!;
+        [Dependency] private readonly IEntityManager _entityManager = default!;
+        [Dependency] private readonly GeneticsSystem _geneticsSystem = default!;
+        [Dependency] private readonly PaperSystem _paper = default!;
+        [Dependency] private readonly SharedPopupSystem _popup = default!;
         [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
+        [Dependency] private readonly IGameTiming _timing = default!;
+        [Dependency] private readonly UserInterfaceSystem _ui = default!;
 
         private const string GeneRepairDamageType = "Radiation";
         private const string GeneRepairHealingGroup = "Genetic";
@@ -40,6 +47,7 @@ namespace Content.Server.Genetics
             SubscribeLocalEvent<GeneticsConsoleComponent, StartActivationButtonPressedMessage>(OnStartActivationButton);
             SubscribeLocalEvent<GeneticsConsoleComponent, CancelActivationButtonPressedMessage>(OnCancelActivationButton);
             SubscribeLocalEvent<GeneticsConsoleComponent, ActivateButtonPressedMessage>(OnActivateButton);
+            SubscribeLocalEvent<GeneticsConsoleComponent, PrintReportButtonPressedMessage>(OnPrintReportButton);
             SubscribeLocalEvent<GeneticsConsoleComponent, UnusedBlockButtonPressedMessage>(OnUnusedBlockButton);
             SubscribeLocalEvent<GeneticsConsoleComponent, UsedBlockButtonPressedMessage>(OnUsedBlockButton);
             SubscribeLocalEvent<GeneticsConsoleComponent, FillBasePairButtonPressedMessage>(OnFillBasePairButton);
@@ -189,9 +197,8 @@ namespace Content.Server.Genetics
                     }
 
                     List<List<BasePair>> allBPs = _puzzles[gene].UsedBlocks.Concat(_puzzles[gene].UnusedBlocks).ToList();
-                    display.Add(new GeneDisplay(gene, PuzzleChecker.CalculateSubmittedSequence(allBPs)));
+                    display.Add(new GeneDisplay(gene, SharedGenetics.CalculateSubmittedSequence(allBPs)));
                 }
-                
             }
 
             return display;
@@ -268,7 +275,7 @@ namespace Content.Server.Genetics
                 _damageableSystem.TryChangeDamage(genePod.BodyContainer.ContainedEntity, heal, ignoreResistances: true, origin: component.GenePod);
             }
 
-            _audio.PlayPvs(genePod.RepairGeneSound, uid);
+            _audio.PlayPvs(genePod.RepairGeneSound, component.GenePod.Value);
             geneticSequence.Genes[args.Index].Damaged = false;
             UpdateUserInterface(uid, component, true);
         }
@@ -326,6 +333,60 @@ namespace Content.Server.Genetics
             UpdateUserInterface(uid, component, true);
         }
 
+        private void OnPrintReportButton(EntityUid uid, GeneticsConsoleComponent component, PrintReportButtonPressedMessage args)
+        {
+            if (!TryComp<GenePodComponent>(component.GenePod, out var genePod))
+                return;
+
+            var patientName = genePod.LastScannedBody.HasValue ? _entityManager.GetComponent<MetaDataComponent>(genePod.LastScannedBody.Value).EntityName
+                        : Loc.GetString("genetics-console-ui-window-patient-name-unknown");
+
+            var report = Spawn(component.ReportEntityId, Transform(uid).Coordinates);
+            MetaData(report).EntityName = Loc.GetString("genetics-console-print-report-title", ("name", patientName));
+
+            var msg = GetGeneticsScanMessage(component, genePod, patientName);
+            if (msg == null)
+                return;
+
+            _audio.PlayPvs(component.PrintReportSound, uid);
+            _popup.PopupEntity(Loc.GetString("genetics-console-print-popup"), uid);
+            _paper.SetContent(report, msg.ToMarkup());
+            UpdateUserInterface(uid, component);
+        }
+
+        private FormattedMessage? GetGeneticsScanMessage(GeneticsConsoleComponent console, GenePodComponent genePod, string patientName)
+        {
+            var msg = new FormattedMessage();
+            if (genePod.LastScannedBody == null)
+                return null;
+
+            var n = genePod.LastScannedBody;
+
+            msg.AddMarkup(Loc.GetString("genetics-console-print-report-title", ("name", patientName)));
+            if (TryComp<GeneticSequenceComponent>(genePod.LastScannedBody, out var geneticSequence))
+            {
+                var geneDisplay = GenerateDisplayForAllGenes(geneticSequence.Genes);
+
+                foreach (var display in geneDisplay)
+                {
+                    var type = SharedGenetics.GetGeneTypeLoc(display.Gene, console.ResearchedMutations);
+                    var typeMarkup = Loc.GetString("genetics-console-print-report-gene-type", ("type", type)).PadRight(24);
+                    msg.AddMarkup(typeMarkup);
+                    if (display.Gene.Type == GeneType.Mutation)
+                    {
+                        var statusStringId = (display.Gene.Active) ? "genetics-console-print-report-mutation-activated" : "genetics-console-print-report-mutation-dormant";
+                        msg.AddMarkup(Loc.GetString("genetics-console-print-report-status", ("status", Loc.GetString(statusStringId))));
+                    }
+                    msg.PushNewline();
+                    msg.AddMarkup(Loc.GetString("genetics-console-print-report-sequence", ("sequence", display.Display)));
+                    msg.PushNewline();
+                    msg.PushNewline();
+                }
+            }
+
+            return msg;
+        }
+
         private void OnFillBasePairButton(EntityUid uid, GeneticsConsoleComponent component, FillBasePairButtonPressedMessage args)
         {
             if (!TryComp<GenePodComponent>(component.GenePod, out var genePod))
@@ -360,7 +421,10 @@ namespace Content.Server.Genetics
                 return;
 
             var puzzle = component.Puzzle;
-            int slnDiff = PuzzleChecker.CalculatePuzzleSolutionDiff(puzzle);
+            int slnDiff = SharedGenetics.CalculatePuzzleSolutionDiff(puzzle);
+
+            bool forceActivate = true; // for debugging only
+            if (forceActivate) slnDiff = 0;
 
             if (TryComp<DamageableComponent>(genePod.BodyContainer.ContainedEntity, out var damageable))
             {
@@ -371,15 +435,13 @@ namespace Content.Server.Genetics
 
             if (component.TargetActivationGene != null && slnDiff == 0)
             {
-                component.TargetActivationGene.Active = true;
-                var mutationId = component.TargetActivationGene.Blocks[0].Value;
-                RaiseLocalEvent(new ActivateMutationEvent((EntityUid) genePod.BodyContainer.ContainedEntity!, mutationId, uid));
+                _geneticsSystem.ActivateMutation((EntityUid) genePod.BodyContainer.ContainedEntity!, component.TargetActivationGene, uid);
                 component.TargetActivationGene = null;
-                _audio.PlayPvs(genePod.EditGeneSuccessSound, uid);
+                _audio.PlayPvs(genePod.EditGeneSuccessSound, component.GenePod.Value);
             }
             else
             {
-                _audio.PlayPvs(genePod.EditGeneFailedSound, uid);
+                _audio.PlayPvs(genePod.EditGeneFailedSound, component.GenePod.Value);
             }
             UpdateUserInterface(uid, component, true);
         }

@@ -7,6 +7,8 @@ namespace Content.Client.GeneticsConsole.UI
     [UsedImplicitly]
     public sealed class GeneticsConsoleBoundUserInterface : BoundUserInterface
     {
+        [Dependency] private readonly IEntityManager _entityManager = default!;
+
         private GeneticsConsoleWindow? _window;
 
         public GeneticsConsoleBoundUserInterface(ClientUserInterfaceComponent owner, Enum uiKey) : base(owner, uiKey)
@@ -26,6 +28,7 @@ namespace Content.Client.GeneticsConsole.UI
             _window.OnRepairButtonPressed += (args, btnRef) => SendMessage(new RepairButtonPressedMessage(btnRef.Index));
             _window.OnActivateButtonPressed += (args) => SendMessage(new ActivateButtonPressedMessage());
             _window.OnCancelActivationButtonPressed += (args) => SendMessage(new CancelActivationButtonPressedMessage());
+            _window.OnPrintReportButtonPressed += (args) => SendMessage(new PrintReportButtonPressedMessage());
             _window.OnStartActivationButtonPressed += (args, btnRef) => SendMessage(new StartActivationButtonPressedMessage(btnRef.Index));
             _window.OnUnusedBlockButtonPressed += (args, btnRef) => SendMessage(new UnusedBlockButtonPressedMessage(btnRef.Index));
             _window.OnUsedBlockButtonPressed += (args, btnRef) => SendMessage(new UsedBlockButtonPressedMessage(btnRef.Index));
@@ -34,6 +37,7 @@ namespace Content.Client.GeneticsConsole.UI
 
             _window.SetActiveScreen(GeneticsConsoleScreen.Status);
             _window.SetStatusMessage(Loc.GetString("genetics-console-ui-window-ready-to-scan"), true);
+            _window.SetGeneDirty();
             _window.OpenCentered();
         }
 
@@ -101,8 +105,10 @@ namespace Content.Client.GeneticsConsole.UI
                 }
                 else
                 {
+                    var patientName = (state.PodBodyUid.HasValue) ? _entityManager.GetComponent<MetaDataComponent>(state.PodBodyUid.Value).EntityName
+                        : Loc.GetString("genetics-console-ui-window-patient-name-unknown");
                     _window.SetActiveScreen(GeneticsConsoleScreen.GeneRepair);
-                    _window.SetGeneRepairPanel(state.SequencedGenes, state.KnownMutations);
+                    _window.SetGeneRepairPanel(patientName, state.SequencedGenes, state.KnownMutations);
                 } 
             }
             if (dirty) _window.SetGeneDirty();

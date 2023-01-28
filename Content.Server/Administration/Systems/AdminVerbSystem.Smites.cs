@@ -10,6 +10,7 @@ using Content.Server.Disease;
 using Content.Server.Disease.Components;
 using Content.Server.Electrocution;
 using Content.Server.Explosion.EntitySystems;
+using Content.Server.Genetics;
 using Content.Server.GhostKick;
 using Content.Server.Interaction.Components;
 using Content.Server.Medical;
@@ -66,6 +67,7 @@ public sealed partial class AdminVerbSystem
     [Dependency] private readonly ExplosionSystem _explosionSystem = default!;
     [Dependency] private readonly FixtureSystem _fixtures = default!;
     [Dependency] private readonly FlammableSystem _flammableSystem = default!;
+    [Dependency] private readonly GeneticsSystem _geneticsSystem = default!;
     [Dependency] private readonly GhostKickManager _ghostKickManager = default!;
     [Dependency] private readonly GodmodeSystem _godmodeSystem = default!;
     [Dependency] private readonly InventorySystem _inventorySystem = default!;
@@ -177,6 +179,20 @@ public sealed partial class AdminVerbSystem
             Message = Loc.GetString("admin-smite-monkeyify-description")
         };
         args.Verbs.Add(monkey);
+
+        Verb mutate = new()
+        {
+            Text = "Mutate",
+            Category = VerbCategory.Smite,
+            IconTexture = "/Textures/Effects/crayondecals.rsi/gene.png",
+            Act = () =>
+            {
+                _geneticsSystem.ActivateAllMutations(args.Target);
+            },
+            Impact = LogImpact.Extreme,
+            Message = Loc.GetString("admin-smite-mutate-description")
+        };
+        args.Verbs.Add(mutate);
 
         Verb disposalBin = new()
         {

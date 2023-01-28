@@ -21,6 +21,7 @@ admin-smite-explode-description = Explode them.
 admin-smite-chess-dimension-description = Banishment to the Chess Dimension.
 admin-smite-set-alight-description = Makes them burn.
 admin-smite-monkeyify-description = Turns the target into a monkey.
+admin-smite-mutate-description = Activates all dormant mutations.
 admin-smite-lung-cancer-description = Stage IIIA Lung Cancer, for when they really like the hit show Breaking Bad.
 admin-smite-electrocute-description = Electrocutes them, rendering anything they were wearing useless.
 admin-smite-creampie-description = A creampie, condensed into a button.

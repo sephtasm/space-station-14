@@ -8,16 +8,19 @@ namespace Content.Shared.Genetics.MutationEffects
 {
     public sealed class BlindnessMutationEffect : MutationEffect
     {
-        public override void Apply(EntityUid uid, IEntityManager entityManager, IPrototypeManager prototypeManager, float strength)
+        [DataField("severity")]
+        public int Severity = 8;
+
+        public override void Apply(EntityUid uid, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             var blindingSystem = entityManager.EntitySysManager.GetEntitySystem<SharedBlindingSystem>();
-            blindingSystem.AdjustEyeDamage(uid, (int) Math.Floor(strength * 8)); // 8 is the magic number
+            blindingSystem.AdjustEyeDamage(uid, Severity); // 8 is the magic number
         }
 
-        public override void Remove(EntityUid uid, IEntityManager entityManager, IPrototypeManager prototypeManager, float strength)
+        public override void Remove(EntityUid uid, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             var blindingSystem = entityManager.EntitySysManager.GetEntitySystem<SharedBlindingSystem>();
-            blindingSystem.AdjustEyeDamage(uid, (int) Math.Floor(strength * -8)); // reverse the damage
+            blindingSystem.AdjustEyeDamage(uid, -Severity); // reverse the damage
         }
     }
 }

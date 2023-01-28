@@ -10,8 +10,8 @@ namespace Content.Shared.Genetics.MutationEffects
     [MeansImplicitUse]
     public abstract class MutationEffect
     {
-        public abstract void Apply(EntityUid uid, IEntityManager entityManager, IPrototypeManager prototypeManager, float strength);
-        public abstract void Remove(EntityUid uid, IEntityManager entityManager, IPrototypeManager prototypeManager, float strength);
+        public abstract void Apply(EntityUid uid, IEntityManager entityManager, IPrototypeManager prototypeManager);
+        public abstract void Remove(EntityUid uid, IEntityManager entityManager, IPrototypeManager prototypeManager);
     }
 
 }

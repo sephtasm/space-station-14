@@ -13,6 +13,7 @@ using Content.Server.Genetics.Components;
 using static Content.Shared.Humanoid.HumanoidAppearanceState;
 using static Content.Shared.Humanoid.SharedHumanoidAppearanceSystem;
 using Content.Shared.Genetics.GeneticsConsole;
+using Content.Server.Atmos;
 
 namespace Content.Server.Genetics
 {
@@ -43,7 +44,6 @@ namespace Content.Server.Genetics
         private readonly Dictionary<uint, Sex> _sexIndex = new();
 
         private byte[] _encryptionKey = default!;
-        private readonly Dictionary<uint, uint> _mutationsMasks = new(); // going to generate a different mask for each one
 
         private const int SPECIES_GENE_INDEX = 0;
         private const int SEX_GENE_INDEX = 1;
@@ -67,7 +67,8 @@ namespace Content.Server.Genetics
             SubscribeLocalEvent<ActivateMutationEvent>(OnMutationActivate);
             SubscribeLocalEvent<DeactivateMutationEvent>(OnMutationDeactivate);
 
-            SubscribeLocalEvent<DamageResistanceMutationComponent, DamageModifyEvent>(OnDamageModify);
+            SubscribeLocalEvent<MutationsComponent, DamageModifyEvent>(OnDamageModify);
+            SubscribeLocalEvent<MutationsComponent, LowPressureEvent>(OnLowPressureModify);
             SubscribeLocalEvent<GeneticSequenceComponent, DamageChangedEvent>(OnDamageTaken);
         }
 
@@ -119,11 +120,11 @@ namespace Content.Server.Genetics
             List<Color> convertedColors = new List<Color>();
             foreach (Block block in gene.Blocks)
             {
-                if (block.Type == BlockType.Primary)
+                if (block.Type == BlockType.Primary && block.Value > 0)
                 {
                     markingPrototype = _markingsIndex[category][block.Value];
                 }
-                else
+                else if (block.Type == BlockType.Modifier)
                 {
                     colorBlocks.Add(block);
                     if (colorBlocks.Count == 4)
@@ -183,7 +184,7 @@ namespace Content.Server.Genetics
                 }
                 while (markingGenes.Count < _maxMarkingPointsPerCategory.GetValueOrDefault(markingCategory, 0))
                 {
-                    markingGenes.Add(new Gene(GeneType.Markings, new List<Block>(), markingCategory));
+                    markingGenes.Add(new Gene(GeneType.Markings, new List<Block>() { new Block(0, ObfuscateToString(0), BlockType.Primary) }, markingCategory));
                 }
                 genes.AddRange(markingGenes);
             }
@@ -277,7 +278,7 @@ namespace Content.Server.Genetics
         {
             var arrA = BitConverter.GetBytes(number);
             var encryptA = Encrypt(arrA, _encryptionKey);
-            return PuzzleChecker.DecimalToGene(BitConverter.ToUInt32(encryptA));
+            return SharedGenetics.DecimalToGene(BitConverter.ToUInt32(encryptA));
         }
 
         /// <summary>
@@ -336,7 +337,8 @@ namespace Content.Server.Genetics
             uint i = 0;
             foreach (Sex sex in sexes)
             {
-                _sexIndex.Add(i++, sex);
+                uint geneIndex = i++;
+                _sexIndex.Add(geneIndex, sex);
             }
         }
 
@@ -350,7 +352,8 @@ namespace Content.Server.Genetics
                 uint i = 0;
                 foreach (var prototype in _prototypeManager.EnumeratePrototypes<MarkingPrototype>())
                 {
-                    markingsIndexForCategory.Add(i++, prototype);
+                    uint geneIndex = i++;
+                    markingsIndexForCategory.Add(geneIndex, prototype);
                 }
                 _markingsIndex.Add(markingCategory, markingsIndexForCategory);
             }
@@ -378,7 +381,7 @@ namespace Content.Server.Genetics
                 }
                 var mutationProto = _mutationsIndex[ev.Value];
                 foreach (var effect in mutationProto.Effects)
-                    effect.Apply(ev.Uid, EntityManager, _prototypeManager, mutationProto.Strength);
+                    effect.Apply(ev.Uid, EntityManager, _prototypeManager);
 
                 if (ev.ConsoleUid != null) UpdateKnownMutations((EntityUid) ev.ConsoleUid, ev.Value);
             }
@@ -395,19 +398,30 @@ namespace Content.Server.Genetics
                 }
                 var mutationProto = _mutationsIndex[ev.Value];
                 foreach (var effect in mutationProto.Effects)
-                    effect.Remove(ev.Uid, EntityManager, _prototypeManager, mutationProto.Strength);
+                    effect.Remove(ev.Uid, EntityManager, _prototypeManager);
             }
         }
 
-        private void OnDamageModify(EntityUid uid, DamageResistanceMutationComponent resistanceMutation, DamageModifyEvent ev)
+        private void OnDamageModify(EntityUid uid, MutationsComponent resistanceMutation, DamageModifyEvent ev)
         {
             // apply any resistances to damage granted by mutations
             var damage = ev.Damage;
-            foreach(var set in resistanceMutation.Modifiers.Values)
+            foreach(var set in resistanceMutation.DamageModifiers.Values)
             {
                 damage = DamageSpecifier.ApplyModifierSet(damage, set);
             }
             ev.Damage = damage;
+        }
+
+        private void OnLowPressureModify(EntityUid uid, MutationsComponent mutations, LowPressureEvent ev)
+        {
+            // take the highest value from all mutations
+            float multiplier = 1.0f;
+            foreach (var value in mutations.LowPressureResistances.Values)
+            {
+                multiplier = Math.Max(value, multiplier);
+            }
+            ev.Multiplier *= multiplier;
         }
 
         private void OnDamageTaken(EntityUid uid, GeneticSequenceComponent geneComponent, DamageChangedEvent ev)
@@ -431,6 +445,23 @@ namespace Content.Server.Genetics
                     }
                 }
             }
+        }
+        public void ActivateAllMutations(EntityUid uid)
+        {
+            if (!TryComp<GeneticSequenceComponent>(uid, out var geneticSequence))
+                return;
+            foreach (var gene in geneticSequence.Genes)
+            {
+                ActivateMutation(uid, gene);
+            }
+        }
+
+        public void ActivateMutation(EntityUid uid, Gene gene, EntityUid? consoleUid = null)
+        {
+            if (gene.Active) return;
+            gene.Active = true;
+            var mutationId = gene.Blocks[0].Value;
+            RaiseLocalEvent(new ActivateMutationEvent(uid, mutationId, consoleUid));
         }
 
         private void OnAppearanceUpdate(HumanoidAppearanceUpdateEvent ev)

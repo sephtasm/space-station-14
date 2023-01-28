@@ -1,9 +1,10 @@
-using Content.Shared.Atmos.Monitor.Components;
+using Robust.Shared.Prototypes;
 using Content.Shared.Genetics;
 using Content.Shared.Genetics.Components;
 using Content.Shared.Genetics.GeneticsConsole;
 using Content.Shared.MachineLinking;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
+using Robust.Shared.Audio;
 
 namespace Content.Server.Genetics.Components
 {
@@ -12,6 +13,15 @@ namespace Content.Server.Genetics.Components
     {
         [DataField("podPort", customTypeSerializer: typeof(PrototypeIdSerializer<TransmitterPortPrototype>))]
         public readonly string PodPort = "GenePodSender";
+
+        /// <summary>
+        /// The entity spawned by a report.
+        /// </summary>
+        [DataField("reportEntityId", customTypeSerializer: typeof(PrototypeIdSerializer<EntityPrototype>))]
+        public string ReportEntityId = "Paper";
+
+        [DataField("printReportSound")]
+        public readonly SoundSpecifier PrintReportSound = new SoundPathSpecifier("/Audio/Machines/printer.ogg");
 
         [ViewVariables]
         public EntityUid? GenePod = null;

@@ -81,6 +81,7 @@
   description: The genetics scanning and gene editing console.
   components:
   - type: GeneticsConsole
+    reportEntityId: PaperGeneticsSummary
   - type: DeviceList
   - type: DeviceNetwork
     deviceNetId: Wired

@@ -100,6 +100,11 @@ namespace Content.Shared.Genetics.GeneticsConsole
     }
 
     [Serializable, NetSerializable]
+    public sealed class PrintReportButtonPressedMessage : BoundUserInterfaceMessage
+    {
+    }
+
+    [Serializable, NetSerializable]
     public sealed class RepairButtonPressedMessage : BoundUserInterfaceMessage
     {
         public int Index { get; set; }
@@ -159,137 +164,6 @@ namespace Content.Shared.Genetics.GeneticsConsole
             TargetBlockIndex = targetBlockIndex;
             TargetPairIndex = targetPairIndex;
             IsTop = isTop;
-        }
-    }
-
-    public sealed class PuzzleChecker
-    {
-        public static readonly Dictionary<Base, string> BaseToChar = new Dictionary<Base, string>
-        {
-            { Base.A, "A" },
-            { Base.T, "T" },
-            { Base.G, "G" },
-            { Base.C, "C" },
-            { Base.Unknown, "?" },
-            { Base.Empty, " " }
-        };
-
-
-        /// <summary>
-        /// Converts the given decimal number to a base 4 system using gene pairs.
-        /// </summary>
-        /// <param name="decimalNumber">The number to convert.</param>
-        /// <returns></returns>
-        public static string DecimalToGene(long decimalNumber)
-        {
-            const int radix = 4;
-            const int bitsInLong = 64;
-            const string digits = "ATGC";
-
-            if (decimalNumber == 0)
-                return "A";
-
-            int index = bitsInLong - 1;
-            long currentNumber = Math.Abs(decimalNumber);
-            char[] charArray = new char[bitsInLong];
-
-            while (currentNumber != 0)
-            {
-                int remainder = (int) (currentNumber % radix);
-                charArray[index--] = digits[remainder];
-                currentNumber = currentNumber / radix;
-            }
-
-            string result = new string(charArray, index + 1, bitsInLong - index - 1);
-            if (decimalNumber < 0)
-            {
-                result = "-" + result;
-            }
-
-            return result;
-        }
-
-
-        public static List<BasePair> CombineBlocks(List<List<BasePair>> blocks)
-        {
-            var combined = new List<BasePair>();
-            BasePair? previous = null;
-            foreach (var block in blocks)
-            {
-                foreach (var pair in block)
-                {
-                    if (previous == null)
-                        combined.Add(new BasePair(pair));
-
-                    //  xo x
-                    //  x ox
-                    else if (pair.TopActual == Base.Empty && previous?.TopActual != Base.Empty && previous?.BotActual == Base.Empty)
-                    {
-                        previous.BotActual = pair.BotActual;
-                        previous.BotAssigned = pair.BotAssigned;
-                    }
-                    //  x ox
-                    //  xo x
-                    else if (pair.BotActual == Base.Empty && previous?.BotActual != Base.Empty && previous?.TopActual == Base.Empty)
-                    {
-                        previous.TopActual = pair.TopActual;
-                        previous.TopAssigned = pair.TopAssigned;
-                    }
-
-                    else
-                        combined.Add(new BasePair(pair));
-                    previous = combined[combined.Count-1];
-                }
-            }
-            return combined;
-        }
-        public static bool CanSubmitPuzzle(GenePuzzle puzzle)
-        {
-            if (puzzle == null || puzzle.UnusedBlocks.Count>0) return false;
-            var pairs = CombineBlocks(puzzle.UsedBlocks);
-            return ValidateCombinedPairs(pairs);
-        }
-
-        private static bool ValidateCombinedPairs(List<BasePair> pairs)
-        {
-            foreach (var pair in pairs)
-            {
-                if (pair.TopAssigned == Base.Empty || pair.BotAssigned == Base.Empty) return false;
-                if (pair.TopAssigned == Base.Empty || pair.BotAssigned == Base.Empty) return false;
-
-                if (pair.TopAssigned == Base.Unknown || pair.BotAssigned == Base.Unknown) return false;
-                if (pair.TopAssigned == Base.Unknown || pair.BotAssigned == Base.Unknown) return false;
-            }
-
-            return true;
-        }
-
-        public static string CalculateSubmittedSequence(List<List<BasePair>> blocks)
-        {
-            var combined = CombineBlocks(blocks);
-            return string.Join("", combined.Select(pair => BaseToChar[pair.TopAssigned]).ToList());
-        }
-
-        public static int CalculatePuzzleSolutionDiff(GenePuzzle puzzle)
-        {
-            if (puzzle == null || puzzle.UnusedBlocks.Count > 0) return 0;
-            var combined = CombineBlocks(puzzle.UsedBlocks);
-
-            if (!ValidateCombinedPairs(combined))
-                return puzzle.Solution.Length;
-
-            var submitted = string.Join("", combined.Select(pair => BaseToChar[pair.TopAssigned]).ToList());
-
-            // shouldn't be possible, but we'll check anyway
-            if (submitted.Length != puzzle.Solution.Length) return Math.Abs(submitted.Length - puzzle.Solution.Length);
-
-            int diff = 0;
-            for(var i=0; i< puzzle.Solution.Length; ++i)
-            {
-                if (submitted[i] != puzzle.Solution[i]) diff++;
-            }
-
-            return diff;
         }
     }
 

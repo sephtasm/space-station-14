@@ -18,34 +18,38 @@
                     SetHeight="20">
                 </ProgressBar>
             </BoxContainer>
-            <Button Name="BtnSequencing"  Text="Begin Sequencing" Margin="4"/>
+            <Button Name="BtnSequencing" Text="{Loc 'genetics-console-ui-window-gene-sequencing-prompt'}" Margin="4"/>
         </BoxContainer>
         <!-- Gene Repair and Modification -->
-        <BoxContainer Name="ModificationScreen"  Orientation="Horizontal" HorizontalExpand="True" VerticalExpand="True" Visible="False">
+        <BoxContainer Name="ModificationScreen"  Orientation="Vertical" HorizontalExpand="True" VerticalExpand="True" Visible="False">
+            <BoxContainer Orientation="Horizontal">
+                <Label Name="PatientName" HorizontalExpand="True" Align="Left" />
+                <Button Name="BtnPrint" Text="{Loc 'genetics-console-ui-window-gene-print-prompt'}" Margin="4"/>
+            </BoxContainer>
             <TabContainer Name="CTabContainer" VerticalExpand="True" HorizontalExpand="True">
                 <!-- Gene Repair -->
                 <BoxContainer Name="CGeneRepair" Orientation="Vertical" HorizontalExpand="True">
                     <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
+                        <Label Name="GeneRepairHeader" MinWidth="100"  Align="Center" Text="{Loc 'genetics-console-ui-window-gene-repair-header'}" />
                         <Label Name="GeneTypeHeader" HorizontalExpand="True" Align="Center" Text="{Loc 'genetics-console-ui-window-gene-type-header'}" />
                         <Label Name="GeneBlockHeader" HorizontalExpand="True" Align="Center" Text="{Loc 'genetics-console-ui-window-gene-block-header'}" />
-                        <Label Name="GeneRepairHeader" HorizontalExpand="True" Align="Center" Text="{Loc 'genetics-console-ui-window-gene-repair-header'}" />
                     </BoxContainer>
                     <ScrollContainer HorizontalExpand="True" VerticalExpand="True">
                         <BoxContainer Name="GeneRepairPanel" VerticalExpand="True" HorizontalExpand="True" Margin="1 1 1 1" MinSize="315 150" Align="Center">
-                            <BoxContainer Name="GeneRepairBlocks" VerticalExpand="True" HorizontalExpand="True"  Orientation="Vertical" />
+                            <BoxContainer Name="GeneRepairTable" VerticalExpand="True" HorizontalExpand="True"  Orientation="Vertical" />
                         </BoxContainer>
                     </ScrollContainer>
                 </BoxContainer>
                 <!-- Mutations Overview -->
                 <BoxContainer Name="CMutations" Orientation="Vertical" HorizontalExpand="True">
                     <BoxContainer Orientation="Horizontal" HorizontalExpand="True">
+                        <Label Name="MutationActivateHeader"  MinWidth="100" Align="Center" Text="{Loc 'genetics-console-ui-window-gene-activate-header'}" />
                         <Label Name="MutationTypeHeader" HorizontalExpand="True" Align="Center" Text="{Loc 'genetics-console-ui-window-mutation-type-header'}" />
                         <Label Name="MutationBlockHeader" HorizontalExpand="True" Align="Center" Text="{Loc 'genetics-console-ui-window-gene-block-header'}" />
-                        <Label Name="MutationActivateHeader" HorizontalExpand="True" Align="Center" Text="{Loc 'genetics-console-ui-window-gene-activate-header'}" />
                     </BoxContainer>
                     <ScrollContainer HorizontalExpand="True" VerticalExpand="True">
                         <BoxContainer Name="MutationPanel" VerticalExpand="True" HorizontalExpand="True" Margin="1 1 1 1" MinSize="315 150" Align="Center">
-                            <BoxContainer Name="MutationBlocks" VerticalExpand="True" HorizontalExpand="True"  Orientation="Vertical" />
+                            <BoxContainer Name="MutationTable" VerticalExpand="True" HorizontalExpand="True"  Orientation="Vertical" />
                         </BoxContainer>
                     </ScrollContainer>
                 </BoxContainer>
@@ -75,8 +79,8 @@
                             <Button Name="BtnFillAsG" Text="G" />
                         </BoxContainer>
                         <BoxContainer Orientation="Horizontal" Align="Center">
-                            <Button Name="BtnFillAsUnkown" Text="Unknown" />
-                            <Button Name="BtnFillCancel" Text="Cancel" />
+                            <Button Name="BtnFillAsUnkown" Text="{Loc 'genetics-console-ui-window-gene-block-type-unknown'}" />
+                            <Button Name="BtnFillCancel" Text="{Loc 'genetics-console-ui-window-gene-cancel-activation'}" />
                         </BoxContainer>
                     </BoxContainer>
                 </PanelContainer>

@@ -20,10 +20,10 @@ namespace Content.Client.GeneticsConsole.UI
         public event Action<BaseButton.ButtonEventArgs, IndexedButton>? OnUsedBlockButtonPressed;
         public event Action<BaseButton.ButtonEventArgs, IndexedButton>? OnUnusedBlockButtonPressed;
         public event Action<BaseButton.ButtonEventArgs>? OnCancelActivationButtonPressed;
+        public event Action<BaseButton.ButtonEventArgs>? OnPrintReportButtonPressed;
 
         public event Action<BaseButton.ButtonEventArgs, FillBasePairButtonPressedMessage>? OnFillBasePairButtonPressed;
 
-        private List<Gene> _lastGeneSequence = new List<Gene>(); //TODO: this is bad
         private bool _geneDirty = false;
 
         private int _prevUsedBlockCnt = 0;
@@ -35,7 +35,6 @@ namespace Content.Client.GeneticsConsole.UI
         private bool _targetBaseTop = false;
 
         private static readonly Vector2 BlockSize = new(15, 15);
-
 
         private static readonly Dictionary<Base, Color> BaseToColor = new Dictionary<Base, Color>
             {
@@ -55,6 +54,7 @@ namespace Content.Client.GeneticsConsole.UI
             BtnSequencing.OnPressed += a => OnSequenceButtonPressed?.Invoke(a);
             BtnActivateGene.OnPressed += a => OnActivateButtonPressed?.Invoke(a);
             BtnCancelActivation.OnPressed += a => OnCancelActivationButtonPressed?.Invoke(a);
+            BtnPrint.OnPressed += a => OnPrintReportButtonPressed?.Invoke(a);
 
             BtnFillAsA.OnPressed += a => SendFillBasePairEvent(a, Base.A);
             BtnFillAsT.OnPressed += a => SendFillBasePairEvent(a, Base.T);
@@ -66,11 +66,6 @@ namespace Content.Client.GeneticsConsole.UI
 
             CTabContainer.SetTabTitle(0, Loc.GetString("genetics-console-ui-window-tab-gene-repair"));
             CTabContainer.SetTabTitle(1, Loc.GetString("genetics-console-ui-window-tab-mutations"));
-
-            MutationTypeHeader.Text = Loc.GetString("genetics-console-ui-window-mutation-type-header");
-            MutationBlockHeader.Text = Loc.GetString("genetics-console-ui-window-gene-block-header");
-            MutationActivateHeader.Text = Loc.GetString("genetics-console-ui-window-gene-activate-header");
-
         }
 
         public void SetGeneDirty()
@@ -78,31 +73,7 @@ namespace Content.Client.GeneticsConsole.UI
             _geneDirty = true;
         }
 
-        private string GetGeneTypeLoc(Gene gene, Dictionary<long, string> knownMutations)
-        {
-            switch (gene.Type)
-            {
-                case GeneType.Species:
-                    return Loc.GetString("genetics-console-ui-window-gene-block-type-species");
-                case GeneType.BaseLayer:
-                    return Loc.GetString("genetics-console-ui-window-gene-block-type-base-layer");
-                case GeneType.SkinColor:
-                    return Loc.GetString("genetics-console-ui-window-gene-block-type-skin-color");
-                case GeneType.EyeColor:
-                    return Loc.GetString("genetics-console-ui-window-gene-block-type-eye-color");
-                case GeneType.Markings:
-                    return Loc.GetString("genetics-console-ui-window-gene-block-type-marking");
-                case GeneType.Sex:
-                    return Loc.GetString("genetics-console-ui-window-gene-block-type-sex");
-                case GeneType.Mutation:
-                    var mutationId = gene.Blocks[0].Value;
-                    if (knownMutations.ContainsKey(mutationId)) return knownMutations[mutationId];
-                    return Loc.GetString("genetics-console-ui-window-gene-block-type-unknown");
-                default:
-                    return Loc.GetString("genetics-console-ui-window-gene-block-type-unknown");
-            }
 
-        }
 
         private PanelContainer CreateBoxForBP(BasePair bp, bool top, int blockIndex, int pairIndex)
         {
@@ -120,7 +91,7 @@ namespace Content.Client.GeneticsConsole.UI
             {
                 var bpButton = new FillBasePairButton(blockIndex, pairIndex, top)
                 {
-                    Text = PuzzleChecker.BaseToChar[b],
+                    Text = SharedGenetics.BaseToChar[b],
                     MinSize = BlockSize,
                     HorizontalAlignment = HAlignment.Center,
                     HorizontalExpand = false
@@ -133,7 +104,7 @@ namespace Content.Client.GeneticsConsole.UI
             { 
                 container.AddChild(new Label
                 {
-                    Text = PuzzleChecker.BaseToChar[b],
+                    Text = SharedGenetics.BaseToChar[b],
                     MinSize = BlockSize,
                     HorizontalAlignment = HAlignment.Center,
                     HorizontalExpand = false
@@ -195,10 +166,10 @@ namespace Content.Client.GeneticsConsole.UI
             _prevUnusedBlockCnt = puzzle.UnusedBlocks.Count;
             _geneDirty = false;
 
-            var geneTypeText = GetGeneTypeLoc(gene, knownMutations);
+            var geneTypeText = SharedGenetics.GetGeneTypeLoc(gene, knownMutations);
             ActivationTargetType.Text = Loc.GetString("genetics-console-ui-window-gene-block-type", ("type", geneTypeText));
 
-            BtnActivateGene.Disabled = !PuzzleChecker.CanSubmitPuzzle(puzzle);
+            BtnActivateGene.Disabled = !SharedGenetics.CanSubmitPuzzle(puzzle);
 
             UnusedTargetBlocks.RemoveAllChildren();
             ActivationTargetBlocks.RemoveAllChildren();
@@ -273,74 +244,76 @@ namespace Content.Client.GeneticsConsole.UI
             return panelContainer;
         }
 
-        public void SetGeneRepairPanel(List<GeneDisplay> geneDisplays, Dictionary<long, string> knownMutations)
+        public void SetGeneRepairPanel(string patientName, List<GeneDisplay> geneDisplays, Dictionary<long, string> knownMutations)
         {
             if (!_geneDirty) return;
             _geneDirty = false;
 
-            GeneRepairBlocks.RemoveAllChildren();
-            MutationBlocks.RemoveAllChildren();
+            PatientName.Text = Loc.GetString("genetics-console-ui-window-patient-name", ("name", patientName));
+            GeneRepairTable.RemoveAllChildren();
+            MutationTable.RemoveAllChildren();
             var index = 0;
             foreach (var geneDisplay in geneDisplays)
             {
-                var geneBox = new BoxContainer
-                {
-                    Orientation = LayoutOrientation.Horizontal,
-                    HorizontalExpand = true
-                };
-
-                var geneTypeText = GetGeneTypeLoc(geneDisplay.Gene, knownMutations);
-                geneBox.AddChild(new Label
-                {
-                    Text = Loc.GetString("genetics-console-ui-window-gene-block-type", ("type", geneTypeText)),
-                    HorizontalExpand = true
-                });
-
-                geneBox.AddChild(new Label
-                {
-                    Text = geneDisplay.Display,
-                    HorizontalExpand = true,
-                    ClipText = true
-                });
-
-                var buttonContainer = new BoxContainer
-                {
-                    Orientation = LayoutOrientation.Horizontal,
-                    HorizontalExpand = true
-                };
-                geneBox.AddChild(buttonContainer);
-
+                BoxContainer repairButtonContainer = new BoxContainer { MinWidth = 100 };
+                BoxContainer geneOverviewRow = CreateGeneTableRow(knownMutations, geneDisplay, repairButtonContainer);
                 if (geneDisplay.Gene.Damaged)
                 {
-                    geneBox.Modulate = new Color(255, 0, 0);
+                    geneOverviewRow.Modulate = new Color(255, 0, 0);
                     var repairButton = new IndexedButton(index, Loc.GetString("genetics-console-ui-window-gene-repair-prompt"));
                     repairButton.OnPressed += e => OnRepairButtonPressed?.Invoke(e, repairButton);
-                    buttonContainer.AddChild(repairButton);
+                    repairButtonContainer.AddChild(repairButton);
                 }
-                GeneRepairBlocks.AddChild(geneBox);
+                GeneRepairTable.AddChild(geneOverviewRow);
 
-                if(geneDisplay.Gene.Type == GeneType.Mutation)
+                if (geneDisplay.Gene.Type == GeneType.Mutation)
                 {
+                    BoxContainer activateButtonContainer = new BoxContainer { MinWidth = 100 };
+                    BoxContainer mutationRow = CreateGeneTableRow(knownMutations, geneDisplay, activateButtonContainer);
                     if (!geneDisplay.Gene.Active)
                     {
                         var activateButton = new IndexedButton(index, Loc.GetString("genetics-console-ui-window-gene-activate-prompt"));
                         activateButton.OnPressed += e => OnStartActivationButtonPressed?.Invoke(e, activateButton);
-                        buttonContainer.AddChild(activateButton);
+                        activateButtonContainer.AddChild(activateButton);
                     }
                     else
                     {
-                        buttonContainer.AddChild(new Label
+                        activateButtonContainer.AddChild(new Label
                         {
                             Text = Loc.GetString("genetics-console-ui-window-gene-mutation-status-activated"),
                             HorizontalExpand = true
                         });
                     }
-
-                    MutationBlocks.AddChild(geneBox);
+                    MutationTable.AddChild(mutationRow);
                 }
 
                 ++index;
             }
+        }
+
+        private BoxContainer CreateGeneTableRow(Dictionary<long, string> knownMutations, GeneDisplay geneDisplay, BoxContainer buttonContainer)
+        {
+            var geneBox = new BoxContainer
+            {
+                Orientation = LayoutOrientation.Horizontal,
+                HorizontalExpand = true
+            };
+            geneBox.AddChild(buttonContainer);
+
+            var geneTypeText = SharedGenetics.GetGeneTypeLoc(geneDisplay.Gene, knownMutations);
+            geneBox.AddChild(new Label
+            {
+                Text = Loc.GetString("genetics-console-ui-window-gene-block-type", ("type", geneTypeText)),
+                HorizontalExpand = true
+            });
+
+            geneBox.AddChild(new Label
+            {
+                Text = geneDisplay.Display,
+                HorizontalExpand = true,
+                ClipText = true
+            });
+            return geneBox;
         }
 
         public void SetProgressBarStatus(bool visible, float percentage)

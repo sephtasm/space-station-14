@@ -5,14 +5,129 @@
   localizationStringId: genetics-mutation-name-blindness
   effects: 
     - !type:BlindnessMutationEffect
-  strength: 1.0
+      severity: 8
   weight: 100
   
 - type: mutation
   id: HeatResistance
   localizationStringId: genetics-mutation-name-heat-resistance
   effects:
-    - !type:HeatResistanceMutationEffect
-  strength: 0.5
+    - !type:DamageResistanceMutationEffect
+      source: HeatResistance
+      damageTypeName: Heat
+      coefficient: 0.5
   weight: 100
   
+- type: mutation
+  id: ColdResistance
+  localizationStringId: genetics-mutation-name-cold-resistance
+  effects:
+    - !type:DamageResistanceMutationEffect
+      source: ColdResistance
+      damageTypeName: Cold
+  weight: 100
+  
+- type: mutation
+  id: ShockResistance
+  localizationStringId: genetics-mutation-name-shock-resistance
+  effects:
+    - !type:DamageResistanceMutationEffect
+      source: ShockResistance
+      damageTypeName: Shock
+  weight: 100
+  
+- type: mutation
+  id: PoisonResistance
+  localizationStringId: genetics-mutation-name-poison-resistance
+  effects:
+    - !type:DamageResistanceMutationEffect
+      source: PoisonResistance
+      damageTypeName: Poison
+  weight: 100
+  
+- type: mutation
+  id: SpaceResistance
+  localizationStringId: genetics-mutation-name-space-resistance
+  effects:
+    - !type:LowPressureResistMutationEffect
+      source: SpaceResistance
+      lowPressureMultiplier: 1000
+  weight: 100
+  
+- type: mutation
+  id: Pyrokinesis
+  localizationStringId: genetics-mutation-name-pyrokinesis
+  effects:
+    - !type:GiveActionMutationEffect
+      worldActions:
+        - PyrokineticBurst
+        - PyrokineticBlast
+  weight: 100
+
+- type: worldTargetAction
+  id: PyrokineticBurst
+  name: action-name-spell-pyrokinetic-burst
+  description: action-description-spell-pyrokinetic-burst
+  useDelay: 1
+  itemIconStyle: BigAction
+  checkCanAccess: false
+  range: 60
+  sound: !type:SoundPathSpecifier
+    path: /Audio/Weapons/Guns/Gunshots/flaregun.ogg
+  icon:
+    sprite: Objects/Magic/magicactions.rsi
+    state: impact_laser
+  serverEvent: !type:ProjectileSpellEvent
+    prototype: ProjectilePyrokineticBurst
+    posData: !type:TargetCasterPos
+    
+- type: entity
+  id: ProjectilePyrokineticBurst
+  name: pk fire
+  description: PSI-based fire attack.
+  parent: BaseBullet
+  noSpawn: true
+  components:
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Projectiles/magic.rsi
+    layers:
+    - state: infernoshot
+  - type: Projectile
+    damage:
+      types:
+        Heat: 10
+
+- type: worldTargetAction
+  id: PyrokineticBlast
+  name: action-name-spell-pyrokinetic-blast
+  description: action-description-spell-pyrokinetic-blast
+  useDelay: 30
+  itemIconStyle: BigAction
+  checkCanAccess: false
+  range: 60
+  sound: !type:SoundPathSpecifier
+    path: /Audio/Magic/fireball.ogg
+  icon:
+    sprite: Objects/Magic/magicactions.rsi
+    state: fireball
+  serverEvent: !type:ProjectileSpellEvent
+    prototype: ProjectilePyrokineticBlast
+    posData: !type:TargetCasterPos
+    
+- type: entity
+  id: ProjectilePyrokineticBlast
+  name: pk fireball
+  description: A large PSI-based fire ball.
+  parent: BulletRocket
+  noSpawn: true
+  components:
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Projectiles/magic.rsi
+    layers:
+    - state: fireball
+  - type: Explosive
+    explosionType: Default
+    maxIntensity: 25
+    intensitySlope: 5
+    totalIntensity: 125
+    maxTileBreak: 0
