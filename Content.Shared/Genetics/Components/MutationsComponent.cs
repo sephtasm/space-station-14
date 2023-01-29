@@ -11,5 +11,12 @@ namespace Content.Shared.Genetics
 
         [DataField("lowPressureResistances", required: true)]
         public Dictionary<string, float> LowPressureResistances = new();
+
+        /// <summary>
+        /// Any blood reagent that the parent entity previously had before a mutation was applied.
+        /// This will be restored if the entity loses the mutation.
+        /// </summary>
+        [DataField("suppressedBloodReagent", required: true)]
+        public string SuppressedBloodReagent = default!;
     }
 }

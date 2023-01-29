@@ -1,4 +1,4 @@
-using Content.Shared.Genetics.MutationEffects;
+using Content.Server.Genetics.MutationEffects;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Genetics.Prototypes;
@@ -21,7 +21,7 @@ public sealed class MutationPrototype : IPrototype
     /// <summary>
     ///     Effect.
     /// </summary>
-    [DataField("effects")]
+    [DataField("effects", serverOnly: true)]
     public List<MutationEffect> Effects { get; } = default!;
 
     /// <summary>

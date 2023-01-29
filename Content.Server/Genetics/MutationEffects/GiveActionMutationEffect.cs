@@ -1,15 +1,10 @@
 using Content.Shared.Actions;
 using Content.Shared.Actions.ActionTypes;
-using Content.Shared.Damage;
-using Content.Shared.Damage.Prototypes;
-using Content.Shared.Eye.Blinding;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
-using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.Dictionary;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.List;
 
-namespace Content.Shared.Genetics.MutationEffects
+namespace Content.Server.Genetics.MutationEffects
 {
     [UsedImplicitly]
     public sealed class GiveActionMutationEffect : MutationEffect
@@ -24,14 +19,14 @@ namespace Content.Shared.Genetics.MutationEffects
         [DataField("instantActions", customTypeSerializer: typeof(PrototypeIdListSerializer<InstantActionPrototype>))]
         public readonly List<string> InstantActions = new();
 
-        public override void Apply(EntityUid uid, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void Apply(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             var actionsSystem = entityManager.System<SharedActionsSystem>();
             var actionTypes = GetAllActions(entityManager, prototypeManager);
             actionsSystem.AddActions(uid, actionTypes, null);
         }
 
-        public override void Remove(EntityUid uid, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void Remove(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             var actionsSystem = entityManager.System<SharedActionsSystem>();
             var actionTypes = GetAllActions(entityManager, prototypeManager);
