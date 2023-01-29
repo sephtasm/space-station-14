@@ -4,6 +4,7 @@ using Content.Server.Body.Systems;
 using Content.Server.Coordinates.Helpers;
 using Content.Server.DoAfter;
 using Content.Server.Doors.Systems;
+using Content.Server.Lightning;
 using Content.Server.Magic.Events;
 using Content.Server.Weapons.Ranged.Systems;
 using Content.Shared.Actions;
@@ -38,6 +39,7 @@ public sealed class MagicSystem : EntitySystem
     [Dependency] private readonly IRobustRandom _random = default!;
     [Dependency] private readonly AirlockSystem _airlock = default!;
     [Dependency] private readonly BodySystem _bodySystem = default!;
+    [Dependency] private readonly LightningSystem _lightning = default!;
     [Dependency] private readonly EntityLookupSystem _lookup = default!;
     [Dependency] private readonly SharedDoorSystem _doorSystem = default!;
     [Dependency] private readonly SharedActionsSystem _actionsSystem = default!;
@@ -60,6 +62,7 @@ public sealed class MagicSystem : EntitySystem
         SubscribeLocalEvent<TeleportSpellEvent>(OnTeleportSpell);
         SubscribeLocalEvent<KnockSpellEvent>(OnKnockSpell);
         SubscribeLocalEvent<SmiteSpellEvent>(OnSmiteSpell);
+        SubscribeLocalEvent<LightningSpellEvent>(OnLightningSpell);
         SubscribeLocalEvent<WorldSpawnSpellEvent>(OnWorldSpawn);
         SubscribeLocalEvent<ProjectileSpellEvent>(OnProjectileSpell);
         SubscribeLocalEvent<ChangeComponentsSpellEvent>(OnChangeComponentsSpell);
@@ -334,6 +337,14 @@ public sealed class MagicSystem : EntitySystem
                 QueueDel(part);
             }
         }
+    }
+
+    private void OnLightningSpell(LightningSpellEvent ev)
+    {
+        if (ev.Handled)
+            return;
+
+        _lightning.ShootLightning(ev.Performer, ev.Target, ev.LightningPrototype);
     }
 
     /// <summary>
