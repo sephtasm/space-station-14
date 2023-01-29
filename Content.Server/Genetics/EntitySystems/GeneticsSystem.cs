@@ -381,7 +381,7 @@ namespace Content.Server.Genetics
                 }
                 var mutationProto = _mutationsIndex[ev.Value];
                 foreach (var effect in mutationProto.Effects)
-                    effect.Apply(ev.Uid, EntityManager, _prototypeManager);
+                    effect.Apply(ev.Uid, mutationProto.ID, EntityManager, _prototypeManager);
 
                 if (ev.ConsoleUid != null) UpdateKnownMutations((EntityUid) ev.ConsoleUid, ev.Value);
             }
@@ -398,7 +398,7 @@ namespace Content.Server.Genetics
                 }
                 var mutationProto = _mutationsIndex[ev.Value];
                 foreach (var effect in mutationProto.Effects)
-                    effect.Remove(ev.Uid, EntityManager, _prototypeManager);
+                    effect.Remove(ev.Uid, mutationProto.ID, EntityManager, _prototypeManager);
             }
         }
 

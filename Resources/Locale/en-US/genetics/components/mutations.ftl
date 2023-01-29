@@ -27,3 +27,6 @@ action-name-spell-shoot-lightning = Lightning
 action-description-spell-shoot-lightning = Fire a bolt of lightning.
 
 genetics-mutation-name-blindness = Blindness
+genetics-mutation-name-acid-blood = Acid Blood
+genetics-mutation-name-hemophilia = Hemophilia
+genetics-mutation-name-anemia = Anemia

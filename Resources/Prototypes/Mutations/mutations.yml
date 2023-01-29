@@ -1,21 +1,51 @@
 # Mutations
 
-# Resistances
+
+#Negative 
 
 - type: mutation
   id: Blindness
   localizationStringId: genetics-mutation-name-blindness
   effects: 
     - !type:BlindnessMutationEffect
-      severity: 1
+      severity: 6
   weight: 100
+  
+# Acid Blood
+- type: mutation
+  id: AcidBlood
+  localizationStringId: genetics-mutation-name-acid-blood
+  effects:
+    - !type:ChangeBloodMutationEffect
+      bloodReagent: FluorosulfuricAcid
+  weight: 100
+  
+- type: mutation
+  id: Hemophilia
+  localizationStringId: genetics-mutation-name-hemophilia
+  effects:
+    - !type:ChangeBloodMutationEffect
+      MaxBleedAmountMultiplier: 1.5
+    - !type:DamageResistanceMutationEffect
+      damageTypeName: Bloodloss
+      coefficient: 1.5
+  weight: 100
+  
+- type: mutation
+  id: Anemia
+  localizationStringId: genetics-mutation-name-anemia
+  effects:
+    - !type:ChangeBloodMutationEffect
+      bloodMaxVolumeMultiplier: 0.67
+  weight: 100
+  
+# Resistances
   
 - type: mutation
   id: HeatResistance
   localizationStringId: genetics-mutation-name-heat-resistance
   effects:
     - !type:DamageResistanceMutationEffect
-      source: HeatResistance
       damageTypeName: Heat
       coefficient: 0.5
   weight: 100
@@ -25,7 +55,6 @@
   localizationStringId: genetics-mutation-name-cold-resistance
   effects:
     - !type:DamageResistanceMutationEffect
-      source: ColdResistance
       damageTypeName: Cold
   weight: 100
   
@@ -34,7 +63,6 @@
   localizationStringId: genetics-mutation-name-shock-resistance
   effects:
     - !type:DamageResistanceMutationEffect
-      source: ShockResistance
       damageTypeName: Shock
   weight: 100
   
@@ -43,7 +71,6 @@
   localizationStringId: genetics-mutation-name-poison-resistance
   effects:
     - !type:DamageResistanceMutationEffect
-      source: PoisonResistance
       damageTypeName: Poison
   weight: 100
   
@@ -52,7 +79,6 @@
   localizationStringId: genetics-mutation-name-space-resistance
   effects:
     - !type:LowPressureResistMutationEffect
-      source: SpaceResistance
       lowPressureMultiplier: 1000
   weight: 100
   
@@ -315,3 +341,7 @@
     state: gib
   serverEvent: !type:LightningSpellEvent
     lightningPrototype: Lightning
+    
+    
+
+  

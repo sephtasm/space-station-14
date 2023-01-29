@@ -1,5 +1,6 @@
 using Content.Server.Body.Systems;
 using Content.Server.Chemistry.EntitySystems;
+using Content.Server.Genetics.MutationEffects;
 using Content.Shared.Chemistry.Components;
 using Content.Shared.Damage;
 using Content.Shared.Damage.Prototypes;
@@ -9,7 +10,7 @@ using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototy
 
 namespace Content.Server.Body.Components
 {
-    [RegisterComponent, Access(typeof(BloodstreamSystem), (typeof(ChemistrySystem)))]
+    [RegisterComponent, Access(typeof(BloodstreamSystem), typeof(ChemistrySystem), (typeof(MutationEffect)))]
     public sealed class BloodstreamComponent : Component
     {
         public static string DefaultChemicalsSolutionName = "chemicals";
