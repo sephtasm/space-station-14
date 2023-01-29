@@ -1,11 +1,13 @@
 # Mutations
 
+# Resistances
+
 - type: mutation
   id: Blindness
   localizationStringId: genetics-mutation-name-blindness
   effects: 
     - !type:BlindnessMutationEffect
-      severity: 8
+      severity: 1
   weight: 100
   
 - type: mutation
@@ -54,6 +56,9 @@
       lowPressureMultiplier: 1000
   weight: 100
   
+  
+  # Pyrokinesis
+  
 - type: mutation
   id: Pyrokinesis
   localizationStringId: genetics-mutation-name-pyrokinesis
@@ -62,6 +67,8 @@
       worldActions:
         - PyrokineticBurst
         - PyrokineticBlast
+      instantActions:
+        - PyrokineticNova
   weight: 100
 
 - type: worldTargetAction
@@ -131,4 +138,180 @@
     intensitySlope: 5
     totalIntensity: 50
     maxTileBreak: 0
+    fireStacks: 2
+
+- type: instantAction
+  id: PyrokineticNova
+  name: action-name-spell-pyrokinetic-nova
+  description: action-description-spell-pyrokinetic-nova
+  useDelay: 60
+  itemIconStyle: BigAction
+  icon:
+    sprite: Objects/Magic/magicactions.rsi
+    state: spell_default
+  serverEvent: !type:InstantSpawnSpellEvent
+    preventCollide: false
+    prototype: SpawnedExplosion
+    
+- type: entity
+  id: SpawnedExplosion
+  name: immediate explosion
+  description: This will result in an immediate explosion.
+  noSpawn: true
+  components:
+  - type: ActiveTimerTrigger
+    timeRemaining: 0
+  - type: ExplodeOnTrigger
+  - type: Explosive
+    explosionType: Inferno
+    maxIntensity: 25
+    intensitySlope: 3
+    totalIntensity: 150
+    maxTileBreak: 0
     fireStacks: 3
+    
+# Cryokinesis
+
+- type: mutation
+  id: Cryokinesis
+  localizationStringId: genetics-mutation-name-cryokinesis
+  effects:
+    - !type:GiveActionMutationEffect
+      worldActions:
+        - GroundIce
+      instantActions:
+        - IceWall
+  weight: 100
+    
+- type: instantAction
+  id: IceWall
+  name: action-name-spell-icewall
+  description: action-description-spell-icewall
+  useDelay: 20
+  itemIconStyle: BigAction
+  sound: !type:SoundPathSpecifier
+    path: /Audio/Magic/forcewall.ogg
+  icon:
+    sprite: Objects/Magic/magicactions.rsi
+    state: shield
+  serverEvent: !type:InstantSpawnSpellEvent
+    prototype: WallCryokinesis
+    posData: !type:TargetInFront
+    preventCollide: false
+    
+- type: worldTargetAction
+  id: GroundIce
+  name: action-name-spell-ground-ice
+  description: action-description-spell-ground-ice
+  useDelay: 20
+  range: 5
+  itemIconStyle: BigAction
+  sound: !type:SoundPathSpecifier
+    path: /Audio/Magic/forcewall.ogg
+  icon:
+    sprite: Objects/Magic/magicactions.rsi
+    state: shield
+  serverEvent: !type:WorldSpawnSpellEvent
+    prototypes:
+      - id: PuddleIce
+
+- type: entity
+  parent: BaseWall
+  id: WallCryokinesis
+  name: ice wall
+  components:
+  - type: TimedDespawn
+    lifetime: 20
+  - type: Tag
+    tags:
+      - Wall
+  - type: Sprite
+    sprite: Structures/Walls/ice.rsi
+  - type: Icon
+    sprite: Structures/Walls/ice.rsi
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 50
+      behaviors:
+      - !type:SpawnEntitiesBehavior
+        spawn:
+          PuddleWater:
+            min: 1
+            max: 1
+      - !type:DoActsBehavior
+        acts: [ "Destruction" ]
+  - type: IconSmooth
+    key: walls
+    base: ice
+
+- type: entity
+  name: ice
+  id: PuddleIce
+  description: A patch of ice.
+  parent: EvaporatingPuddle
+  components:
+  - type: Sprite
+    sprite: Fluids/smear.rsi # Placeholder
+    state: smear-1
+    netsync: false
+  - type: Puddle
+    slipThreshold: 3  
+  - type: Slippery
+    launchForwardsMultiplier: 2.0
+  - type: StepTrigger
+  - type: SolutionContainerManager
+    solutions:
+      puddle:
+        maxVol: 1000
+        reagents:
+        - ReagentId: Water
+          Quantity: 5
+    
+- type: entity
+  name: water
+  id: PuddleWater
+  description: A puddle of water.
+  parent: EvaporatingPuddle
+  components:
+  - type: Sprite
+    sprite: Fluids/splatter.rsi # Placeholder
+    state: splatter-0
+    netsync: false
+  - type: SolutionContainerManager
+    solutions:
+      puddle:
+        maxVol: 1000
+        reagents:
+        - ReagentId: Water
+          Quantity: 10
+          
+          
+# Force Lightning
+
+- type: mutation
+  id: Electrokinesis
+  localizationStringId: genetics-mutation-name-electrokinesis
+  effects:
+    - !type:GiveActionMutationEffect
+      entityTargetActions:
+        - ShootLightning
+  weight: 100
+  
+- type: entityTargetAction
+  id: ShootLightning
+  name: action-name-spell-shoot-lightning
+  description: action-description-spell-shoot-lightning
+  useDelay: 60
+  range: 9
+  itemIconStyle: BigAction
+  canTargetSelf: false
+  interactOnMiss: false
+  sound: !type:SoundPathSpecifier
+    path: /Audio/Magic/disintegrate.ogg
+  icon:
+    sprite: Objects/Magic/magicactions.rsi
+    state: gib
+  serverEvent: !type:LightningSpellEvent
+    lightningPrototype: Lightning

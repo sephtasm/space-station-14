@@ -75,7 +75,7 @@
   id: Inferno
   damagePerIntensity:
     types:
-      Heat: 3
+      Heat: 2
       Blunt: 1
   tileBreakChance: [0]
   tileBreakIntensity: [0]
