@@ -47,7 +47,7 @@
   effects:
     - !type:DamageResistanceMutationEffect
       damageTypeName: Heat
-      coefficient: 0.5
+      coefficient: 0.75
   weight: 100
   
 - type: mutation
@@ -56,6 +56,7 @@
   effects:
     - !type:DamageResistanceMutationEffect
       damageTypeName: Cold
+      coefficient: 0.75
   weight: 100
   
 - type: mutation
@@ -64,6 +65,7 @@
   effects:
     - !type:DamageResistanceMutationEffect
       damageTypeName: Shock
+      coefficient: 0.75
   weight: 100
   
 - type: mutation
@@ -72,6 +74,7 @@
   effects:
     - !type:DamageResistanceMutationEffect
       damageTypeName: Poison
+      coefficient: 0.75
   weight: 100
   
 - type: mutation
@@ -391,3 +394,4 @@
       saturationMultiplier: 5.0
       maxSaturationMultiplier: 5.0
       suffocationDamageMultiplier: 0.1
+      
