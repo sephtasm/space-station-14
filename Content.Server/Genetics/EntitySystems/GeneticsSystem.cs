@@ -12,8 +12,6 @@ using Content.Shared.Damage;
 using Content.Server.Genetics.Components;
 using static Content.Shared.Humanoid.HumanoidAppearanceState;
 using static Content.Shared.Humanoid.SharedHumanoidAppearanceSystem;
-using Content.Shared.Genetics.GeneticsConsole;
-using Content.Server.Atmos;
 
 namespace Content.Server.Genetics
 {
@@ -67,8 +65,6 @@ namespace Content.Server.Genetics
             SubscribeLocalEvent<ActivateMutationEvent>(OnMutationActivate);
             SubscribeLocalEvent<DeactivateMutationEvent>(OnMutationDeactivate);
 
-            SubscribeLocalEvent<MutationsComponent, DamageModifyEvent>(OnDamageModify);
-            SubscribeLocalEvent<MutationsComponent, LowPressureEvent>(OnLowPressureModify);
             SubscribeLocalEvent<GeneticSequenceComponent, DamageChangedEvent>(OnDamageTaken);
         }
 
@@ -400,28 +396,6 @@ namespace Content.Server.Genetics
                 foreach (var effect in mutationProto.Effects)
                     effect.Remove(ev.Uid, mutationProto.ID, EntityManager, _prototypeManager);
             }
-        }
-
-        private void OnDamageModify(EntityUid uid, MutationsComponent resistanceMutation, DamageModifyEvent ev)
-        {
-            // apply any resistances to damage granted by mutations
-            var damage = ev.Damage;
-            foreach(var set in resistanceMutation.DamageModifiers.Values)
-            {
-                damage = DamageSpecifier.ApplyModifierSet(damage, set);
-            }
-            ev.Damage = damage;
-        }
-
-        private void OnLowPressureModify(EntityUid uid, MutationsComponent mutations, LowPressureEvent ev)
-        {
-            // take the highest value from all mutations
-            float multiplier = 1.0f;
-            foreach (var value in mutations.LowPressureResistances.Values)
-            {
-                multiplier = Math.Max(value, multiplier);
-            }
-            ev.Multiplier *= multiplier;
         }
 
         private void OnDamageTaken(EntityUid uid, GeneticSequenceComponent geneComponent, DamageChangedEvent ev)
