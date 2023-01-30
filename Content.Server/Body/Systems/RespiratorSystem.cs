@@ -185,6 +185,16 @@ namespace Content.Server.Body.Systems
             respirator.Saturation =
                 Math.Clamp(respirator.Saturation, respirator.MinSaturation, respirator.MaxSaturation);
         }
+        public void ApplySuffocationDamageMultiplier(EntityUid uid, RespiratorComponent? component,
+            float suffocationDamageMultiplier, bool removeModifier = false)
+        {
+            if (!Resolve(uid, ref component, false))
+                return;
+            if (removeModifier)
+                component.Damage /= suffocationDamageMultiplier;
+            else
+                component.Damage *= suffocationDamageMultiplier;
+        }
 
         public void ApplyRespirationModifer(EntityUid uid, RespiratorComponent? component,
             float cycleDelayMultiplier, float saturationMultiplier, float minSaturationMultiplier, float maxSaturationMultiplier,
