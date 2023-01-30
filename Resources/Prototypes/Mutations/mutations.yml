@@ -351,9 +351,9 @@
   id: BuzzochloricBlood
   localizationStringId: genetics-mutation-name-buzzochloric-blood
   effects:
-    # - !type:ChangeBloodMutationEffect #this causes a crash because an entity gets created during an entity query
-    #  bloodReagent: BuzzochloricBees
-    - !type:ChangeFactionMutationEffect
+#    - !type:ChangeBloodMutationEffect #this causes a crash because an entity gets created during an entity query
+#      bloodReagent: BuzzochloricBees
+    - !type:AddFactionMutationEffect
       faction: Bee
     - !type:ReactToDamageMutationEffect
       threshold: 15
