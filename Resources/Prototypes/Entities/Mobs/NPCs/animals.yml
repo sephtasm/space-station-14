@@ -149,6 +149,7 @@
   - type: Faction
     factions:
     - SimpleHostile
+    - Bee
   - type: Bloodstream
     bloodMaxVolume: 0.1
 

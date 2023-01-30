@@ -42,6 +42,14 @@ namespace Content.Server.Destructible.Thresholds
         /// </summary>
         [ViewVariables] public IReadOnlyList<IThresholdBehavior> Behaviors => _behaviors;
 
+        public DamageThreshold() { }
+        public DamageThreshold(IThresholdTrigger? trigger, List<IThresholdBehavior> behaviors)
+        {
+            TriggersOnce = false;
+            Trigger = trigger;
+            _behaviors = behaviors;
+        }
+
         public bool Reached(DamageableComponent damageable, DestructibleSystem system)
         {
             if (Trigger == null)

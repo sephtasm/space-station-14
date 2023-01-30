@@ -186,8 +186,10 @@
   noSpawn: true
   components:
   - type: ActiveTimerTrigger
-    timeRemaining: 0
+    timeRemaining: 0.0
   - type: ExplodeOnTrigger
+  #- type: FlashOnTrigger
+  - type: DeleteOnTrigger
   - type: Explosive
     explosionType: Inferno
     maxIntensity: 25
@@ -342,6 +344,41 @@
   serverEvent: !type:LightningSpellEvent
     lightningPrototype: Lightning
     
-    
 
-  
+# Bees
+
+- type: mutation
+  id: BuzzochloricBlood
+  localizationStringId: genetics-mutation-name-buzzochloric-blood
+  effects:
+    # - !type:ChangeBloodMutationEffect #this causes a crash because an entity gets created during an entity query
+    #  bloodReagent: BuzzochloricBees
+    - !type:ChangeFactionMutationEffect
+      faction: Bee
+    - !type:ReactToDamageMutationEffect
+      threshold: 15
+      behavior: !type:SpawnEntitiesBehavior
+        spawn:
+          MobAngryBee:
+            min: 1
+            max: 3
+    - !type:GiveActionMutationEffect
+      instantActions:
+        - SpawnBee
+  weight: 100
+
+- type: instantAction
+  id: SpawnBee
+  name: action-name-spell-spawn-bees
+  description: action-description-spell-spawn-bees
+  useDelay: 2
+  itemIconStyle: BigAction
+  sound: !type:SoundPathSpecifier
+    path: /Audio/Items/Toys/bee.ogg
+  icon:
+    sprite: Objects/Fun/toys.rsi
+    state: plushie_h
+  serverEvent: !type:InstantSpawnSpellEvent
+    prototype: MobAngryBee
+    posData: !type:TargetInFront
+    preventCollide: false

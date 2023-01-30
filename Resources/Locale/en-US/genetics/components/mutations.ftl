@@ -26,6 +26,10 @@ genetics-mutation-name-electrokinesis = Electrokinesis
 action-name-spell-shoot-lightning = Lightning
 action-description-spell-shoot-lightning = Fire a bolt of lightning.
 
+genetics-mutation-name-buzzochloric-blood = Buzzochloric Blood
+action-name-spell-spawn-bees = Summon Bees
+action-description-spell-spawn-bees = Bring some friends.
+
 genetics-mutation-name-blindness = Blindness
 genetics-mutation-name-acid-blood = Acid Blood
 genetics-mutation-name-hemophilia = Hemophilia

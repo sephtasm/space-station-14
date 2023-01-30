@@ -33,3 +33,10 @@
   hostile:
   - NanoTrasen
   - Syndicate
+  
+- type: faction
+  id: Bee
+  hostile:
+  - NanoTrasen
+  - Syndicate
+  - Xeno
