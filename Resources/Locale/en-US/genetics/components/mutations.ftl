@@ -34,3 +34,4 @@ genetics-mutation-name-blindness = Blindness
 genetics-mutation-name-acid-blood = Acid Blood
 genetics-mutation-name-hemophilia = Hemophilia
 genetics-mutation-name-anemia = Anemia
+genetics-mutation-name-anaerobic-respiration = Anaerobic Respiration

@@ -382,3 +382,12 @@
     prototype: MobAngryBee
     posData: !type:TargetInFront
     preventCollide: false
+    
+- type: mutation
+  id: AnaerobicRespiration
+  localizationStringId: genetics-mutation-name-anaerobic-respiration
+  effects:
+    - !type:ModifyRespirationMutationEffect
+      cycleDelayMultiplier: 5.0
+      saturationMultiplier: 5.0
+      maxSaturationMultiplier: 2.0

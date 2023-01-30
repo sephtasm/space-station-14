@@ -186,26 +186,36 @@ namespace Content.Server.Body.Systems
                 Math.Clamp(respirator.Saturation, respirator.MinSaturation, respirator.MaxSaturation);
         }
 
-        private void OnApplyMetabolicMultiplier(EntityUid uid, RespiratorComponent component,
-            ApplyMetabolicMultiplierEvent args)
+        public void ApplyRespirationModifer(EntityUid uid, RespiratorComponent? component,
+            float cycleDelayMultiplier, float saturationMultiplier, float minSaturationMultiplier, float maxSaturationMultiplier,
+            bool removeModifier = false)
         {
-            if (args.Apply)
+            if (!Resolve(uid, ref component, false))
+                return;
+
+            if (!removeModifier)
             {
-                component.CycleDelay *= args.Multiplier;
-                component.Saturation *= args.Multiplier;
-                component.MaxSaturation *= args.Multiplier;
-                component.MinSaturation *= args.Multiplier;
+                component.CycleDelay *= cycleDelayMultiplier;
+                component.Saturation *= saturationMultiplier;
+                component.MaxSaturation *= maxSaturationMultiplier;
+                component.MinSaturation *= minSaturationMultiplier;
                 return;
             }
 
-            // This way we don't have to worry about it breaking if the stasis bed component is destroyed
-            component.CycleDelay /= args.Multiplier;
-            component.Saturation /= args.Multiplier;
-            component.MaxSaturation /= args.Multiplier;
-            component.MinSaturation /= args.Multiplier;
+            component.CycleDelay /= cycleDelayMultiplier;
+            component.Saturation /= saturationMultiplier;
+            component.MaxSaturation /= maxSaturationMultiplier;
+            component.MinSaturation /= minSaturationMultiplier;
+
             // Reset the accumulator properly
             if (component.AccumulatedFrametime >= component.CycleDelay)
                 component.AccumulatedFrametime = component.CycleDelay;
+        }
+
+        private void OnApplyMetabolicMultiplier(EntityUid uid, RespiratorComponent component,
+            ApplyMetabolicMultiplierEvent args)
+        {
+            ApplyRespirationModifer(uid, component, args.Multiplier, args.Multiplier, args.Multiplier, args.Multiplier, !args.Apply);
         }
     }
 }
