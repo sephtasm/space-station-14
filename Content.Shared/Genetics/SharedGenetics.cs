@@ -1,12 +1,9 @@
-using Content.Server.Medical.Components;
 using Content.Shared.Genetics.GeneticsConsole;
 using Content.Shared.Humanoid.Markings;
+using Robust.Shared.Random;
 using Robust.Shared.Serialization;
-using System;
-using System.Collections.Generic;
+using Robust.Shared.Utility;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Content.Shared.Genetics
 {
@@ -81,8 +78,7 @@ namespace Content.Shared.Genetics
                     return Loc.GetString("genetics-console-ui-window-gene-block-type-unknown");
             }
         }
-
-        public static List<BasePair> CombineBlocks(List<List<BasePair>> blocks)
+        private static List<BasePair> CombineBlocks(List<List<BasePair>> blocks)
         {
             var combined = new List<BasePair>();
             BasePair? previous = null;
@@ -162,6 +158,122 @@ namespace Content.Shared.Genetics
             }
 
             return diff;
+        }
+
+        private static List<BasePair> GenerateSolvedPairs(string solution)
+        {
+            var charToBP = new Dictionary<char, Base>
+            {
+                { 'A', Base.A },
+                { 'T', Base.T },
+                { 'G', Base.G },
+                { 'C', Base.C }
+            };
+            var charToOpposite = new Dictionary<char, Base>
+            {
+                { 'A', Base.T },
+                { 'T', Base.A },
+                { 'G', Base.C },
+                { 'C', Base.G }
+            };
+
+            var pairs = new List<BasePair>();
+            foreach (char c in solution)
+            {
+                var p = new BasePair(charToBP[c], charToBP[c], charToOpposite[c], charToOpposite[c]);
+                pairs.Add(p);
+            }
+            return pairs;
+        }
+        public static GenePuzzle GeneratePuzzle(string solution, IRobustRandom random)
+        {
+            int cuts = 3;
+            int doubleUnkowns = 2;
+            int unknowns = 4;
+            List<BasePair> solved = GenerateSolvedPairs(solution);
+            List<List<BasePair>> puzzle = new List<List<BasePair>>();
+            int totalLength = solved.Count;
+
+            // insert single unknown bases
+            for (var i = 0; i < unknowns; ++i)
+            {
+                int index = random.Next(0, totalLength);
+                if (random.Next(0, 2) == 0)
+                {
+                    solved[index].TopAssigned = Base.Unknown;
+                    solved[index].TopActual = Base.Unknown;
+                }
+                else
+                {
+                    solved[index].BotAssigned = Base.Unknown;
+                    solved[index].BotActual = Base.Unknown;
+                }
+            }
+
+            // insert double unknowns
+            for (var i = 0; i < doubleUnkowns; ++i)
+            {
+                int index = random.Next(0, totalLength);
+                solved[index].TopAssigned = Base.Unknown;
+                solved[index].TopActual = Base.Unknown;
+                solved[index].BotAssigned = Base.Unknown;
+                solved[index].BotActual = Base.Unknown;
+            }
+
+            // make cuts
+            int start = 0;
+            for (var i = 0; i < cuts; ++i)
+            {
+                int min = Math.Max(i + 2, (totalLength / cuts) * i);
+                int max = Math.Min(totalLength - 1, (totalLength / cuts) * (i + 1));
+
+                int cut = random.Next(min, max);
+                int stop = Math.Min(cut, totalLength);
+                List<BasePair> block = new List<BasePair>();
+                for (var j = start; j < stop; j++)
+                {
+                    block.Add(solved[j]);
+                }
+                start += block.Count;
+                puzzle.Add(block);
+            }
+            List<BasePair> remaining = new List<BasePair>();
+            for (var j = start; j < totalLength; j++)
+            {
+                remaining.Add(solved[j]);
+            }
+            if (remaining.Count > 0) puzzle.Add(remaining);
+
+            // for each resulting segment, decide if it will be a clean or jagged cut
+            List<BasePair>? previous = null;
+            foreach (var block in puzzle)
+            {
+                if (previous != null)
+                {
+                    var dieRoll = random.Next(0, 10);
+                    if (dieRoll < 4)
+                    {
+                        var splitPairs = SplitPair(previous.Pop());
+                        previous.Add(splitPairs.Item1);
+                        block.Insert(0, splitPairs.Item2);
+                    }
+                    else if (dieRoll < 8)
+                    {
+                        var splitPairs = SplitPair(previous.Pop());
+                        previous.Add(splitPairs.Item2);
+                        block.Insert(0, splitPairs.Item1);
+                    }
+                }
+                previous = block;
+            }
+            random.Shuffle(puzzle);
+            return new GenePuzzle(solution, puzzle, new List<List<BasePair>>());
+        }
+        private static Tuple<BasePair, BasePair> SplitPair(BasePair pair)
+        {
+            var top = new BasePair(pair.TopActual, pair.TopAssigned, Base.Empty, Base.Empty);
+            var bot = new BasePair(Base.Empty, Base.Empty, pair.BotActual, pair.BotAssigned);
+            return new Tuple<BasePair, BasePair>(top, bot);
         }
     }
 
