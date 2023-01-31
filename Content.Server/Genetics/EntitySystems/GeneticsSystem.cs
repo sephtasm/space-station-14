@@ -194,7 +194,7 @@ namespace Content.Server.Genetics
             var key = _markingsIndex[markingCategory].FirstOrDefault(x => x.Value.ID == marking.MarkingId).Key;
             blocksForGene.Add(new Block(key, ObfuscateToString(key), BlockType.Primary));
 
-            foreach (Color color in marking.MarkingColors)
+            foreach (var color in marking.MarkingColors)
             {
                 blocksForGene.AddRange(ConvertToBlocks(color, BlockType.Modifier));
             }
@@ -376,9 +376,11 @@ namespace Content.Server.Genetics
                     if (gene.Type == GeneType.Mutation && gene.Blocks[0].Value == ev.Value) gene.Active = true;
                 }
                 var mutationProto = _mutationsIndex[ev.Value];
-                foreach (var effect in mutationProto.Effects)
-                    effect.Apply(ev.Uid, mutationProto.ID, EntityManager, _prototypeManager);
-
+                if (geneSequence.MutationEffectsEnabled)
+                {
+                    foreach (var effect in mutationProto.Effects)
+                        effect.Apply(ev.Uid, mutationProto.ID, EntityManager, _prototypeManager);
+                }
                 if (ev.ConsoleUid != null) UpdateKnownMutations((EntityUid) ev.ConsoleUid, ev.Value);
             }
         }
@@ -393,8 +395,11 @@ namespace Content.Server.Genetics
                     if (gene.Type == GeneType.Mutation && gene.Blocks[0].Value == ev.Value) gene.Active = false;
                 }
                 var mutationProto = _mutationsIndex[ev.Value];
-                foreach (var effect in mutationProto.Effects)
-                    effect.Remove(ev.Uid, mutationProto.ID, EntityManager, _prototypeManager);
+                if (geneSequence.MutationEffectsEnabled)
+                {
+                    foreach (var effect in mutationProto.Effects)
+                        effect.Remove(ev.Uid, mutationProto.ID, EntityManager, _prototypeManager);
+                }
             }
         }
 
@@ -445,12 +450,21 @@ namespace Content.Server.Genetics
             RaiseLocalEvent(new ActivateMutationEvent(uid, mutationId, consoleUid));
         }
 
+        private static bool IsAppearanceGene(Gene gene)
+        {
+            return (gene.Type != GeneType.Mutation && gene.Type != GeneType.Gender);
+        }
+
         private void OnAppearanceUpdate(HumanoidAppearanceUpdateEvent ev)
         {
             if (!ev.Handled && TryComp(ev.Uid, out HumanoidAppearanceComponent? targetHumanoid) && TryComp(ev.Uid, out GeneticSequenceComponent? geneSequence))
             {
-                geneSequence.Genes = GenerateGeneticSequence(targetHumanoid, 0);
-                // TODO: should not remove mutations
+                var newGenes = GenerateAppearanceGenes(ev.Uid, targetHumanoid);
+                foreach (var gene in geneSequence.Genes)
+                {
+                    if (!IsAppearanceGene(gene)) newGenes.Add(gene);
+                }
+                geneSequence.Genes = newGenes;
                 ev.Handled = true;
             }
             return;
@@ -458,56 +472,60 @@ namespace Content.Server.Genetics
         }
         private void OnInit(EntityUid uid, GeneticSequenceComponent component, ComponentInit args)
         {
-            if (TryComp(uid, out HumanoidAppearanceComponent? targetHumanoid))
+            component.Genes = GenerateGeneticSequence(uid, component.RandomDormantMutationsOnInit);
+
+            if (component.ForcedActiveMutationsOnInit.Count == 0)
+                return;
+
+            foreach (var (key, value) in _mutationsIndex)
             {
-                component.Genes = GenerateGeneticSequence(targetHumanoid, component.RandomActiveMutationsOnInit);
-
-                if (component.ForcedActiveMutationsOnInit.Count == 0)
-                    return;
-
-                foreach (var (key, value) in _mutationsIndex)
+                if (component.ForcedActiveMutationsOnInit.Contains(value.ID))
                 {
-                    if (component.ForcedActiveMutationsOnInit.Contains(value.ID))
+                    var found = false;
+                    foreach (Gene g in component.Genes)
                     {
-                        var found = false;
-                        foreach (Gene g in component.Genes)
+                        if (g.Type == GeneType.Mutation && g.Blocks[0].Value == key)
                         {
-                            if (g.Type == GeneType.Mutation && g.Blocks[0].Value == key)
-                            {
-                                ActivateMutation(uid, g);
-                                found = true;
-                                break;
-                            }
+                            ActivateMutation(uid, g);
+                            found = true;
+                            break;
                         }
-                        if (!found)
-                        {
-                            var mutationGene = CreateGeneForMutation(key);
-                            component.Genes.Add(mutationGene);
-                            ActivateMutation(uid, mutationGene);
-                        }
+                    }
+                    if (!found)
+                    {
+                        var mutationGene = CreateGeneForMutation(key);
+                        component.Genes.Add(mutationGene);
+                        ActivateMutation(uid, mutationGene);
                     }
                 }
             }
         }
 
-        private List<Gene> GenerateGeneticSequence(HumanoidAppearanceComponent targetHumanoid, int randomMutations)
+        private List<Gene> GenerateAppearanceGenes(EntityUid uid, HumanoidAppearanceComponent? targetHumanoid = null)
         {
-            var geneSequence = new List<Gene>(4)
+            var geneSequence = new List<Gene>();
+            if (Resolve(uid, ref targetHumanoid))
             {
-                ConvertToGene(targetHumanoid.Species), // SPECIES_GENE_INDEX = 0
-                ConvertToGene(targetHumanoid.Sex), // SEX_GENE_INDEX = 1
-                ConvertToGene(targetHumanoid.SkinColor) // SKIN_COLOR_GENE_INDEX = 2
-            };
+                geneSequence.Add(ConvertToGene(targetHumanoid.Species)); // SPECIES_GENE_INDEX = 0
+                geneSequence.Add(ConvertToGene(targetHumanoid.Sex)); // SEX_GENE_INDEX = 1
+                geneSequence.Add(ConvertToGene(targetHumanoid.SkinColor)); // SKIN_COLOR_GENE_INDEX = 2
 
-            if (targetHumanoid.CustomBaseLayers.TryGetValue(HumanoidVisualLayers.Eyes, out CustomBaseLayerInfo eyeBaseLayer) && eyeBaseLayer.Color != null) // EYE_COLOR_GENE_INDEX = 3
-            {
-                geneSequence.Add(ConvertToGene(eyeBaseLayer.Color.Value, GeneType.EyeColor, BlockType.Primary));
+                if (targetHumanoid.CustomBaseLayers.TryGetValue(HumanoidVisualLayers.Eyes, out CustomBaseLayerInfo eyeBaseLayer) && eyeBaseLayer.Color != null) // EYE_COLOR_GENE_INDEX = 3
+                {
+                    geneSequence.Add(ConvertToGene(eyeBaseLayer.Color.Value, GeneType.EyeColor, BlockType.Primary));
+                }
+                else
+                {
+                    geneSequence.Add(new Gene(GeneType.EyeColor, new List<Block>()));
+                }
+                geneSequence.AddRange(ConvertToGenes(targetHumanoid.MarkingSet));
             }
-            else
-            {
-                geneSequence.Add(new Gene(GeneType.EyeColor, new List<Block>()));
-            }
-            geneSequence.AddRange(ConvertToGenes(targetHumanoid.MarkingSet));
+            return geneSequence;
+        }
+
+        private List<Gene> GenerateGeneticSequence(EntityUid uid, int randomMutations)
+        {
+            var geneSequence = GenerateAppearanceGenes(uid);
 
             int dormantMutationsGranted = 0;
             List<(uint, float)> weightedIds = new List<(uint, float)>();

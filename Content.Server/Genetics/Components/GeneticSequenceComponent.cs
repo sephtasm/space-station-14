@@ -11,8 +11,11 @@ namespace Content.Server.Genetics
         [DataField("genes")]
         public List<Gene> Genes = new();
 
+        [DataField("mutationEffectsEnabled")]
+        public bool MutationEffectsEnabled = false;
+
         [DataField("randomDormantMutationsOnInit")]
-        public int RandomActiveMutationsOnInit = 2;
+        public int RandomDormantMutationsOnInit = 0;
 
         [DataField("forcedActiveMutationsOnInit")]
         public HashSet<string> ForcedActiveMutationsOnInit = new();

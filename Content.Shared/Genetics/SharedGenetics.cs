@@ -7,7 +7,6 @@ using System.Linq;
 
 namespace Content.Shared.Genetics
 {
-
     public sealed class SharedGenetics
     {
         public static readonly Dictionary<Base, string> BaseToChar = new Dictionary<Base, string>
@@ -269,11 +268,11 @@ namespace Content.Shared.Genetics
             random.Shuffle(puzzle);
             return new GenePuzzle(solution, puzzle, new List<List<BasePair>>());
         }
-        private static Tuple<BasePair, BasePair> SplitPair(BasePair pair)
+        private static (BasePair, BasePair) SplitPair(BasePair pair)
         {
             var top = new BasePair(pair.TopActual, pair.TopAssigned, Base.Empty, Base.Empty);
             var bot = new BasePair(Base.Empty, Base.Empty, pair.BotActual, pair.BotAssigned);
-            return new Tuple<BasePair, BasePair>(top, bot);
+            return (top, bot);
         }
     }
 
