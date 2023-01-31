@@ -76,6 +76,9 @@
           Quantity: 5
   - type: MeleeChemicalInjector
     solution: melee
+  - type: GeneticSequence
+      forcedActiveMutationsOnInit:
+        - SpaceResistance
   - type: GhostTakeoverAvailable
     prob: 0.33
     makeSentient: true

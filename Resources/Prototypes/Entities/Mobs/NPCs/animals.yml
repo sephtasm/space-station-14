@@ -1343,6 +1343,9 @@
   - type: NoSlip
   - type: Spider
   - type: IgnoreSpiderWeb
+  - type: GeneticSequence
+    forcedActiveMutationsOnInit:
+      - PoisonResistance
 
 - type: entity
   name: tarantula
@@ -1655,6 +1658,10 @@
     heatDamage:
       types:
         Heat : 1 #per second, scales with temperature & other constants
+  - type: GeneticSequence
+    forcedActiveMutationsOnInit:
+      - Pyrokinesis
+      - HeatResistance
 
 - type: entity
   name: corgi puppy

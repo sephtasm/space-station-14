@@ -76,6 +76,9 @@
         - DoorBumpOpener
     - type: ReplacementAccent
       accent: genericAggressive
+    - type: GeneticSequence
+      forcedActiveMutationsOnInit:
+        - SpaceResistance
 
 - type: entity
   parent: BaseMobCarp

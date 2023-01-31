@@ -75,6 +75,9 @@
         Brute: 15
   - type: ReplacementAccent
     accent: genericAggressive
+  - type: GeneticSequence
+      forcedActiveMutationsOnInit:
+        - SpaceResistance
   - type: GhostTakeoverAvailable
     prob: 0.05
     name: space bear
