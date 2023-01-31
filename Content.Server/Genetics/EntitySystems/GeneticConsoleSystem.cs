@@ -15,11 +15,13 @@ using Content.Shared.Damage.Prototypes;
 using Robust.Shared.Utility;
 using Content.Shared.Popups;
 using Content.Server.Paper;
+using Robust.Shared.Random;
 
 namespace Content.Server.Genetics
 {
     public sealed class GeneticsConsoleSystem : EntitySystem
     {
+        [Dependency] private readonly IRobustRandom _random = default!;
         [Dependency] private readonly SharedAudioSystem _audio = default!;
         [Dependency] private readonly DamageableSystem _damageableSystem = default!;
         [Dependency] private readonly IEntityManager _entityManager = default!;
@@ -484,8 +486,6 @@ namespace Content.Server.Genetics
 
         private GenePuzzle GeneratePuzzle(string solution)
         {
-            var random = new Random();
-
             int cuts = 3;
             int doubleUnkowns = 2;
             int unknowns = 4;
@@ -496,8 +496,8 @@ namespace Content.Server.Genetics
             // insert single unknown bases
             for (var i = 0; i < unknowns; ++i)
             {
-                int index = random.Next(0, totalLength);
-                if (random.Next(0, 2) == 0)
+                int index = _random.Next(0, totalLength);
+                if (_random.Next(0, 2) == 0)
                 {
                     solved[index].TopAssigned = Base.Unknown;
                     solved[index].TopActual = Base.Unknown;
@@ -512,7 +512,7 @@ namespace Content.Server.Genetics
             // insert double unknowns
             for (var i = 0; i < doubleUnkowns; ++i)
             {
-                int index = random.Next(0, totalLength);
+                int index = _random.Next(0, totalLength);
                 solved[index].TopAssigned = Base.Unknown;
                 solved[index].TopActual = Base.Unknown;
                 solved[index].BotAssigned = Base.Unknown;
@@ -526,7 +526,7 @@ namespace Content.Server.Genetics
                 int min = Math.Max(i+2, (totalLength / cuts) * i);
                 int max = Math.Min(totalLength - 1, (totalLength / cuts) * (i + 1));
 
-                int cut = random.Next(min, max);
+                int cut = _random.Next(min, max);
                 int stop = Math.Min(cut, totalLength);
                 List<BasePair> block = new List<BasePair>();
                 for (var j = start; j < stop; j++)
@@ -549,7 +549,7 @@ namespace Content.Server.Genetics
             {
                 if (previous != null)
                 {
-                    var dieRoll = random.Next(0, 10);
+                    var dieRoll = _random.Next(0, 10);
                     if (dieRoll < 4)
                     {
                         var splitPairs = splitPair(previous.Pop());
@@ -565,21 +565,8 @@ namespace Content.Server.Genetics
                 }
                 previous = block;
             }
-            Shuffle(puzzle, random);
+            _random.Shuffle(puzzle);
             return new GenePuzzle(solution, puzzle, new List<List<BasePair>>());
-        }
-
-        private static void Shuffle<T>(IList<T> list, Random random)
-        {
-            int n = list.Count;
-            while (n > 1)
-            {
-                n--;
-                int k = random.Next(n + 1);
-                T value = list[k];
-                list[k] = list[n];
-                list[n] = value;
-            }
         }
 
         private Tuple<BasePair, BasePair> splitPair(BasePair pair)
