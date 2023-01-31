@@ -1,10 +1,7 @@
 using Content.Server.Body.Components;
-using Content.Shared.Damage.Prototypes;
 using Content.Shared.Genetics;
 using JetBrains.Annotations;
-using Linguini.Syntax.Ast;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
 
 namespace Content.Server.Genetics.MutationEffects
 {

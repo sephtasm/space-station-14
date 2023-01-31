@@ -1,7 +1,5 @@
-using Content.Server.Body.Components;
 using Content.Server.NPC.Components;
 using Content.Server.NPC.Systems;
-using Content.Shared.Eye.Blinding;
 using Content.Shared.Genetics;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;

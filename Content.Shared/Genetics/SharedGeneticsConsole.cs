@@ -1,7 +1,4 @@
-using Content.Shared.Atmos.Monitor.Components;
 using Robust.Shared.Serialization;
-using Robust.Shared.Utility;
-using System.Linq;
 
 namespace Content.Shared.Genetics.GeneticsConsole
 {

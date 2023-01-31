@@ -1,19 +1,12 @@
-using Content.Server.Body.Components;
-using Content.Server.CombatMode;
 using Content.Server.DoAfter;
 using Content.Shared.Database;
-using Content.Shared.FixedPoint;
 using Content.Shared.Hands;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Interaction;
 using Content.Shared.Interaction.Events;
 using Robust.Shared.GameStates;
-using Robust.Shared.Player;
 using System.Threading;
 using Content.Shared.Mobs.Components;
-using Content.Shared.Verbs;
-using Robust.Server.GameObjects;
-using Content.Shared.Popups;
 using Content.Server.Popups;
 using Content.Server.Genetics.Components;
 using Content.Shared.Chemistry.Components;
@@ -21,8 +14,6 @@ using Content.Shared.CombatMode;
 using Content.Shared.Mobs.Systems;
 using Content.Server.Administration.Logs;
 using Content.Shared.Genetics;
-using Microsoft.CodeAnalysis;
-using Content.Server.Chemistry.EntitySystems;
 
 namespace Content.Server.Genetics.EntitySystems;
 
