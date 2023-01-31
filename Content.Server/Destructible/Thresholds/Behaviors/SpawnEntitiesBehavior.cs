@@ -42,7 +42,7 @@ namespace Content.Server.Destructible.Thresholds.Behaviors
                 {
                     for (var i = 0; i < count; i++)
                     {
-                        system.EntityManager.SpawnEntity(entityId, position.Offset(getRandomVector()));
+                        system.EntityManager.QueueSpawnEntity(entityId, position.Offset(getRandomVector()));
                     }
                 }
             }

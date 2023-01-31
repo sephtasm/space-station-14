@@ -1,4 +1,4 @@
-﻿using Content.Shared.Chemistry.Reaction;
+using Content.Shared.Chemistry.Reaction;
 using Content.Shared.Chemistry.Reagent;
 using Content.Shared.FixedPoint;
 using Content.Shared.Maps;
@@ -59,7 +59,7 @@ public sealed class CreateEntityTileReaction : ITileReaction
             var yoffs = random.NextFloat(-RandomOffsetMax, RandomOffsetMax);
 
             var pos = tile.GridPosition().Offset(new Vector2(0.5f + xoffs, 0.5f + yoffs));
-            entMan.SpawnEntity(Entity, pos);
+            entMan.QueueSpawnEntity(Entity, pos);
 
             return Usage;
         }
