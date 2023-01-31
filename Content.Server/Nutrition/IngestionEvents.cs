@@ -1,5 +1,7 @@
 using Content.Server.Nutrition.Components;
 using Content.Shared.Chemistry.Components;
+using Content.Shared.Damage;
+using System.Threading;
 
 namespace Content.Server.Nutrition;
 
@@ -36,6 +38,21 @@ public sealed class FeedEvent : EntityEventArgs
 }
 
 /// <summary>
+///     Raised directed at the food after a successful feed do-after.
+/// </summary>
+public sealed class FeedEventMatterEater : EntityEventArgs
+{
+    public readonly EntityUid User;
+    public readonly DamageableComponent Damageable;
+
+    public FeedEventMatterEater(EntityUid user, DamageableComponent damageable)
+    {
+        User = user;
+        Damageable = damageable;
+    }
+}
+
+/// <summary>
 ///     Raised directed at the food after a failed force-feed do-after.
 /// </summary>
 public sealed class ForceFeedCancelledEvent : EntityEventArgs
@@ -45,6 +62,16 @@ public sealed class ForceFeedCancelledEvent : EntityEventArgs
     public ForceFeedCancelledEvent(FoodComponent food)
     {
         Food = food;
+    }
+}
+
+public sealed class ForceFeedCancelledMatterEaterEvent : EntityEventArgs
+{
+    public readonly EntityUid Uid;
+
+    public ForceFeedCancelledMatterEaterEvent(EntityUid uid)
+    {
+        Uid = uid;
     }
 }
 

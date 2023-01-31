@@ -400,3 +400,13 @@
   localizationStringId: genetics-mutation-name-gut-fermentation-syndrome
   effects:
     - !type:GutFermentationMutationEffect
+    
+- type: mutation
+  id: MatterEater
+  localizationStringId: genetics-mutation-name-matter-eater
+  effects:
+    - !type:MatterEaterMutationEffect
+    
+        
+    
+    

@@ -8,9 +8,12 @@ using Content.Server.Nutrition.Components;
 using Content.Server.Popups;
 using Content.Shared.Administration.Logs;
 using Content.Shared.Body.Components;
+using Content.Shared.Chemistry.Components;
 using Content.Shared.Chemistry.Reagent;
+using Content.Shared.Damage;
 using Content.Shared.Database;
 using Content.Shared.FixedPoint;
+using Content.Shared.Genetics;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.IdentityManagement;
 using Content.Shared.Interaction;
@@ -42,6 +45,9 @@ namespace Content.Server.Nutrition.EntitySystems
         [Dependency] private readonly InventorySystem _inventorySystem = default!;
         [Dependency] private readonly SharedInteractionSystem _interactionSystem = default!;
         [Dependency] private readonly SharedHandsSystem _handsSystem = default!;
+        [Dependency] private readonly DamageableSystem _damageableSystem = default!;
+
+        private Dictionary<EntityUid, CancellationToken> _foodCancelTokens = new();
 
         public override void Initialize()
         {
@@ -50,8 +56,11 @@ namespace Content.Server.Nutrition.EntitySystems
             SubscribeLocalEvent<FoodComponent, UseInHandEvent>(OnUseFoodInHand);
             SubscribeLocalEvent<FoodComponent, AfterInteractEvent>(OnFeedFood);
             SubscribeLocalEvent<FoodComponent, GetVerbsEvent<AlternativeVerb>>(AddEatVerb);
+            SubscribeLocalEvent<DamageableComponent, GetVerbsEvent<AlternativeVerb>>(AddEatVerbMatterEater);
             SubscribeLocalEvent<BodyComponent, FeedEvent>(OnFeed);
+            SubscribeLocalEvent<BodyComponent, FeedEventMatterEater>(OnFeedMatterEater);
             SubscribeLocalEvent<ForceFeedCancelledEvent>(OnFeedCancelled);
+            SubscribeLocalEvent<ForceFeedCancelledMatterEaterEvent>(OnFeedCancelledMatterEater);
             SubscribeLocalEvent<InventoryComponent, IngestionAttemptEvent>(OnInventoryIngestAttempt);
         }
 
@@ -149,6 +158,90 @@ namespace Content.Server.Nutrition.EntitySystems
             });
 
             return true;
+        }
+
+        
+        public bool TryFeedMatterEater(EntityUid user, DamageableComponent damageable)
+        {
+            if (_foodCancelTokens.ContainsKey(damageable.Owner))
+            {
+                return true;
+            }
+
+            if (!_interactionSystem.InRangeUnobstructed(user, damageable.Owner, popup: true))
+                return true;
+
+            // log voluntary eating
+            _popupSystem.PopupEntity(Loc.GetString("genetics-mutation-matter-eater-start-feed-message", ("user", user), ("entity", damageable.Owner)), user, user);
+
+            _adminLogger.Add(LogType.Ingestion, LogImpact.Low, $"{ToPrettyString(user):user} is eating {ToPrettyString(damageable.Owner):damageable} via matter eater mutation.");
+
+            float delay = 3.0f;
+            var token = new CancellationTokenSource().Token;
+            _foodCancelTokens[damageable.Owner] = token;
+
+            _doAfterSystem.DoAfter(new DoAfterEventArgs(user, delay, token, user, damageable.Owner)
+            {
+                BreakOnUserMove = false,
+                BreakOnDamage = true,
+                BreakOnStun = true,
+                BreakOnTargetMove = true,
+                MovementThreshold = 0.01f,
+                DistanceThreshold = 1.0f,
+                TargetFinishedEvent = new FeedEventMatterEater(user, damageable),
+                TargetCancelledEvent = new ForceFeedCancelledMatterEaterEvent(damageable.Owner),
+                NeedHand = true,
+            });
+
+            return true;
+        }
+
+        private void OnFeedMatterEater(EntityUid uid, BodyComponent body, FeedEventMatterEater args)
+        {
+
+            if (args.Damageable.Deleted)
+                return;
+
+            _foodCancelTokens.Remove(args.Damageable.Owner);
+
+            //args.CancellationToken = null;
+
+            if (!_bodySystem.TryGetBodyOrganComponents<StomachComponent>(uid, out var stomachs, body))
+                return;
+
+            DamageSpecifier damage = new();
+            damage.DamageDict.Add("Piercing", 15.0f);
+            var damageDone = _damageableSystem.TryChangeDamage(args.Damageable.Owner, damage, true, true, args.Damageable, uid);
+
+            if (damageDone == null || damageDone.Total < FixedPoint2.Zero)
+                return;
+
+            var nutrimentDervied = 0.1f * damageDone.Total; // ehhh, shouldn't be too much
+            var solution = new Solution("Nutriment", nutrimentDervied);
+
+            var firstStomach = stomachs.FirstOrNull(
+                stomach => _stomachSystem.CanTransferSolution((stomach.Comp).Owner, solution));
+
+            // No stomach so just popup a message that they can't eat.
+            if (firstStomach == null)
+            {
+                _popupSystem.PopupEntity(
+                        Loc.GetString("food-system-you-cannot-eat-any-more")
+                    , uid, args.User);
+                return;
+            }
+
+            solution.DoEntityReaction(uid, ReactionMethod.Ingestion);
+            _stomachSystem.TryTransferSolution(firstStomach.Value.Comp.Owner, solution, firstStomach.Value.Comp);
+
+            {
+                _popupSystem.PopupEntity(Loc.GetString("genetics-mutation-matter-eater-eat-message", ("entity", args.Damageable.Owner)), args.User, args.User);
+
+                // log successful voluntary eating
+                _adminLogger.Add(LogType.Ingestion, LogImpact.Low, $"{ToPrettyString(args.User):target} ate {ToPrettyString(args.Damageable.Owner):damageable} via matter eater mutation.");
+            }
+
+            SoundSystem.Play("/Audio/Items/eatfood.ogg", Filter.Pvs(uid), uid, AudioParams.Default.WithVolume(1f));
 
         }
 
@@ -246,6 +339,38 @@ namespace Content.Server.Nutrition.EntitySystems
             }
 
             EntityManager.QueueDeleteEntity(component.Owner);
+        }
+
+        private void AddEatVerbMatterEater(EntityUid uid, DamageableComponent component, GetVerbsEvent<AlternativeVerb> ev)
+        {
+            if (uid == ev.User ||
+                !ev.CanInteract ||
+                !ev.CanAccess ||
+                !EntityManager.TryGetComponent(ev.User, out BodyComponent? body) ||
+                !EntityManager.TryGetComponent(ev.User, out MutationsComponent? mutations) ||
+                !_bodySystem.TryGetBodyOrganComponents<StomachComponent>(ev.User, out var stomachs, body))
+                return;
+
+            if (!mutations.AllActiveMutationEffects.Contains("MatterEaterMutationEffect")) { return; }
+
+            if (EntityManager.TryGetComponent<FoodComponent>(uid, out var food))
+                return;
+
+            //if (EntityManager.TryGetComponent<MobStateComponent>(uid, out var mobState) && _mobStateSystem.IsAlive(uid, mobState))
+            //    return;
+
+            AlternativeVerb verb = new()
+            {
+                Act = () =>
+                {
+                    TryFeedMatterEater(ev.User, component);
+                },
+                IconTexture = "/Textures/Interface/VerbIcons/cutlery.svg.192dpi.png",
+                Text = Loc.GetString("food-system-verb-eat"),
+                Priority = -1
+            };
+
+            ev.Verbs.Add(verb);
         }
 
         private void AddEatVerb(EntityUid uid, FoodComponent component, GetVerbsEvent<AlternativeVerb> ev)
@@ -364,6 +489,11 @@ namespace Content.Server.Nutrition.EntitySystems
         private static void OnFeedCancelled(ForceFeedCancelledEvent args)
         {
             args.Food.CancelToken = null;
+        }
+
+        private void OnFeedCancelledMatterEater(ForceFeedCancelledMatterEaterEvent args)
+        {
+            _foodCancelTokens.Remove(args.Uid);
         }
 
         /// <summary>

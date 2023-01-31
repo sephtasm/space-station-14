@@ -30,9 +30,13 @@ genetics-mutation-name-buzzochloric-blood = Buzzochloric Blood
 action-name-spell-spawn-bees = Summon Bees
 action-description-spell-spawn-bees = Bring some friends.
 
+genetics-mutation-name-matter-eater = Matter Eater
 genetics-mutation-name-blindness = Blindness
 genetics-mutation-name-acid-blood = Acid Blood
 genetics-mutation-name-hemophilia = Hemophilia
 genetics-mutation-name-anemia = Anemia
 genetics-mutation-name-anaerobic-respiration = Anaerobic Respiration
 genetics-mutation-name-gut-fermentation-syndrome = Gut Fermentation Syndrome
+
+genetics-mutation-matter-eater-start-feed-message = {$user} starts biting {$entity}.
+genetics-mutation-matter-eater-eat-message = You take a bite out of {$entity} and chew.
