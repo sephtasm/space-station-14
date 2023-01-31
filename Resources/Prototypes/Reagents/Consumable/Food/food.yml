@@ -11,6 +11,12 @@
     Food:
       effects:
       - !type:SatiateHunger
+      - !type:AdjustReagent # almost none of the foods actually contain sugar, so adding it here too
+        conditions:
+        - !type:MobHasMutationCondition 
+          mutationEffect: GutFermentationMutationEffect
+        reagent: Ethanol
+        amount: 0.6 
   plantMetabolism:
   - !type:PlantAdjustNutrition
     amount: 1
@@ -80,6 +86,12 @@
           reagent: Nutriment
           min: 0.1
         factor: 1
+      - !type:AdjustReagent
+        conditions:
+        - !type:MobHasMutationCondition
+          mutationEffect: GutFermentationMutationEffect
+        reagent: Ethanol
+        amount: 1
   plantMetabolism:
   - !type:PlantAdjustNutrition
     amount: 0.1

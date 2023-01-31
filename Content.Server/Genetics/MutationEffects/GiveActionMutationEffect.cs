@@ -20,14 +20,14 @@ namespace Content.Server.Genetics.MutationEffects
         [DataField("instantActions", customTypeSerializer: typeof(PrototypeIdListSerializer<InstantActionPrototype>))]
         public readonly List<string> InstantActions = new();
 
-        public override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        protected override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             var actionsSystem = entityManager.System<SharedActionsSystem>();
             var actionTypes = GetAllActions(entityManager, prototypeManager);
             actionsSystem.AddActions(uid, actionTypes, null);
         }
 
-        public override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        protected override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             var actionsSystem = entityManager.System<SharedActionsSystem>();
             var actionTypes = GetAllActions(entityManager, prototypeManager);

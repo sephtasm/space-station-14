@@ -395,3 +395,8 @@
       maxSaturationMultiplier: 5.0
       suffocationDamageMultiplier: 0.1
       
+- type: mutation
+  id: GutFermentationSyndrome
+  localizationStringId: genetics-mutation-name-gut-fermentation-syndrome
+  effects:
+    - !type:GutFermentationMutationEffect

@@ -14,7 +14,7 @@ namespace Content.Server.Genetics.MutationEffects
         [DataField("faction")]
         public string Faction = default!;
 
-        public override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        protected override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<FactionComponent>(uid, out var factionComponent))
             {
@@ -26,7 +26,7 @@ namespace Content.Server.Genetics.MutationEffects
             }
         }
 
-        public override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        protected override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<FactionComponent>(uid, out var factionComponent))
             {

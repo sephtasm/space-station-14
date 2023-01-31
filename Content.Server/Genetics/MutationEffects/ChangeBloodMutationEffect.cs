@@ -28,7 +28,7 @@ namespace Content.Server.Genetics.MutationEffects
         [DataField("bloodMaxVolumeMultiplier")]
         public float BloodMaxVolumeMultiplier = 1.0f;
 
-        public override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        protected override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<BloodstreamComponent>(uid, out var bloodstreamComponent))
             {
@@ -43,7 +43,7 @@ namespace Content.Server.Genetics.MutationEffects
             }
         }
 
-        public override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        protected override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<BloodstreamComponent>(uid, out var bloodstreamComponent))
             {

@@ -1,4 +1,5 @@
 using Content.Shared.Damage;
+using System.Linq;
 
 namespace Content.Shared.Genetics
 {
@@ -8,6 +9,11 @@ namespace Content.Shared.Genetics
     {
         [DataField("activeMutationIDs")]
         public HashSet<string> ActiveMutationIDs = new();
+
+        [DataField("activeMutationEffects")]
+        public Dictionary<string, HashSet<string>> ActiveMutationEffectsBySource = new();
+
+        public HashSet<string> AllActiveMutationEffects { get => ActiveMutationEffectsBySource.Values.SelectMany(x => x).ToHashSet(); }
 
         [DataField("modifiers")]
         public Dictionary<string, DamageModifierSet> DamageModifiers = new();

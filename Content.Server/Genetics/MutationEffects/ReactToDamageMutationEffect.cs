@@ -22,7 +22,7 @@ namespace Content.Server.Genetics.MutationEffects
         [DataField("limit")]
         public float Limit = 100.0f;
 
-        public override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        protected override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<DestructibleComponent>(uid, out var destructibleComponent))
             {
@@ -40,7 +40,7 @@ namespace Content.Server.Genetics.MutationEffects
             }
         }
 
-        public override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        protected override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<DestructibleComponent>(uid, out var destructibleComponent))
             {
