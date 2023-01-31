@@ -13,8 +13,6 @@ using Content.Shared.Damage;
 using Robust.Shared.Prototypes;
 using Content.Shared.Damage.Prototypes;
 using Robust.Shared.Utility;
-using System.Collections.Generic;
-using Content.Server.Xenoarchaeology.Equipment.Components;
 using Content.Shared.Popups;
 using Content.Server.Paper;
 
@@ -230,8 +228,20 @@ namespace Content.Server.Genetics
 
             _audio.PlayPvs(pod.SequencingFinishedSound, uid);
 
-            if (pod.ConnectedConsole != null)
+            if (pod.ConnectedConsole != null &&
+                TryComp<GeneticSequenceComponent>(pod.LastScannedBody, out var geneticSequence))
+            {
+                foreach (var gene in geneticSequence.Genes)
+                {
+                    if (gene.Type == GeneType.Mutation && gene.Blocks.Count == 1 && gene.Active)
+                    {
+                        _geneticsSystem.UpdateKnownMutations(pod.ConnectedConsole.Value, gene.Blocks[0].Value);
+                    }
+                }
+                
                 UpdateUserInterface((EntityUid) pod.ConnectedConsole, null, true);
+            }
+                
         }
 
         /// <summary>

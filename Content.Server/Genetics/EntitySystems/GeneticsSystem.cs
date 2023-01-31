@@ -356,7 +356,7 @@ namespace Content.Server.Genetics
             
         }
 
-        private void UpdateKnownMutations(EntityUid consoleUid, uint mutationId)
+        public void UpdateKnownMutations(EntityUid consoleUid, uint mutationId)
         {
             if (TryComp(consoleUid, out GeneticsConsoleComponent? console))
             {
@@ -430,6 +430,13 @@ namespace Content.Server.Genetics
             }
         }
 
+        public MutationPrototype? TryGetMutationProtoForGene(Gene gene)
+        {
+            if (gene.Type != GeneType.Mutation || gene.Blocks.Count != 1) return null;
+            var mutationId = gene.Blocks[0].Value;
+            return _mutationsIndex[mutationId];
+        }
+
         public void ActivateMutation(EntityUid uid, Gene gene, EntityUid? consoleUid = null)
         {
             if (gene.Active) return;
@@ -442,7 +449,8 @@ namespace Content.Server.Genetics
         {
             if (!ev.Handled && TryComp(ev.Uid, out HumanoidAppearanceComponent? targetHumanoid) && TryComp(ev.Uid, out GeneticSequenceComponent? geneSequence))
             {
-                geneSequence.Genes = GenerateGeneticSequence(targetHumanoid);
+                geneSequence.Genes = GenerateGeneticSequence(targetHumanoid, 0);
+                // TODO: should not remove mutations
                 ev.Handled = true;
             }
             return;
@@ -450,14 +458,39 @@ namespace Content.Server.Genetics
         }
         private void OnInit(EntityUid uid, GeneticSequenceComponent component, ComponentInit args)
         {
-            if (TryComp(uid, out HumanoidAppearanceComponent? targetHumanoid)) {
-                component.Genes = GenerateGeneticSequence(targetHumanoid);
-            }
-            return;
+            if (TryComp(uid, out HumanoidAppearanceComponent? targetHumanoid))
+            {
+                component.Genes = GenerateGeneticSequence(targetHumanoid, component.RandomActiveMutationsOnInit);
 
+                if (component.ForcedActiveMutationsOnInit.Count == 0)
+                    return;
+
+                foreach (var (key, value) in _mutationsIndex)
+                {
+                    if (component.ForcedActiveMutationsOnInit.Contains(value.ID))
+                    {
+                        var found = false;
+                        foreach (Gene g in component.Genes)
+                        {
+                            if (g.Type == GeneType.Mutation && g.Blocks[0].Value == key)
+                            {
+                                ActivateMutation(uid, g);
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found)
+                        {
+                            var mutationGene = CreateGeneForMutation(key);
+                            component.Genes.Add(mutationGene);
+                            ActivateMutation(uid, mutationGene);
+                        }
+                    }
+                }
+            }
         }
 
-        private List<Gene> GenerateGeneticSequence(HumanoidAppearanceComponent targetHumanoid)
+        private List<Gene> GenerateGeneticSequence(HumanoidAppearanceComponent targetHumanoid, int randomMutations)
         {
             var geneSequence = new List<Gene>(4)
             {
@@ -476,17 +509,48 @@ namespace Content.Server.Genetics
             }
             geneSequence.AddRange(ConvertToGenes(targetHumanoid.MarkingSet));
 
-            foreach(var id in _mutationsIndex.Keys)
+            int dormantMutationsGranted = 0;
+            List<(uint, float)> weightedIds = new List<(uint, float)>();
+
+            float totalWeight = 0f;
+            foreach(var (id, proto) in _mutationsIndex)
             {
-                var block = new List<Block>();
-                block.Add(new Block(id, ObfuscateToString(id)));
-                var mutationGene = new Gene(GeneType.Mutation, block);
-                mutationGene.Active = false;
-                geneSequence.Add(mutationGene);
+                weightedIds.Add( (id, proto.Weight) );
+                totalWeight += proto.Weight;
             }
 
+            // TODO: handle cases where randomMutations is close to the same as total mutations, low weights, etc.
+            HashSet<uint> added = new();
+            while (dormantMutationsGranted < randomMutations)
+            {
+                float currentWeightIndex = 0;
+                float itemWeightIndex = (float) _random.NextDouble() * totalWeight;
+                foreach ( var (id, weight) in weightedIds)
+                {
+                    currentWeightIndex += weight;
+                    if (currentWeightIndex >= itemWeightIndex)
+                    {
+                        if (!added.Contains(id))
+                        {
+                            added.Add(id);
+                            geneSequence.Add(CreateGeneForMutation(id));
+                            dormantMutationsGranted++;
+                        }
+                        break;
+                    }
+                }
+
+            }
             return geneSequence;
         }
 
+        private Gene CreateGeneForMutation(uint id)
+        {
+            var block = new List<Block>();
+            block.Add(new Block(id, ObfuscateToString(id)));
+            var mutationGene = new Gene(GeneType.Mutation, block);
+            mutationGene.Active = false;
+            return mutationGene;
+        }
     }
 }

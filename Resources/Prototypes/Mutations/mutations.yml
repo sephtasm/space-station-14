@@ -18,7 +18,7 @@
   effects:
     - !type:ChangeBloodMutationEffect
       bloodReagent: FluorosulfuricAcid
-  weight: 100
+  weight: 80
   
 - type: mutation
   id: Hemophilia
@@ -48,7 +48,7 @@
     - !type:DamageResistanceMutationEffect
       damageTypeName: Heat
       coefficient: 0.75
-  weight: 100
+  weight: 50
   
 - type: mutation
   id: ColdResistance
@@ -57,7 +57,7 @@
     - !type:DamageResistanceMutationEffect
       damageTypeName: Cold
       coefficient: 0.75
-  weight: 100
+  weight: 50
   
 - type: mutation
   id: ShockResistance
@@ -66,7 +66,7 @@
     - !type:DamageResistanceMutationEffect
       damageTypeName: Shock
       coefficient: 0.75
-  weight: 100
+  weight: 50
   
 - type: mutation
   id: PoisonResistance
@@ -75,7 +75,7 @@
     - !type:DamageResistanceMutationEffect
       damageTypeName: Poison
       coefficient: 0.75
-  weight: 100
+  weight: 50
   
 - type: mutation
   id: SpaceResistance
@@ -83,7 +83,7 @@
   effects:
     - !type:LowPressureResistMutationEffect
       lowPressureMultiplier: 1000
-  weight: 100
+  weight: 20
   
   
   # Pyrokinesis
@@ -98,7 +98,7 @@
         - PyrokineticBlast
       instantActions:
         - PyrokineticNova
-  weight: 100
+  weight: 5
 
 - type: worldTargetAction
   id: PyrokineticBurst
@@ -212,7 +212,7 @@
         - GroundIce
       instantActions:
         - IceWall
-  weight: 100
+  weight: 20
     
 - type: instantAction
   id: IceWall
@@ -328,7 +328,7 @@
     - !type:GiveActionMutationEffect
       entityTargetActions:
         - ShootLightning
-  weight: 100
+  weight: 10
   
 - type: entityTargetAction
   id: ShootLightning
@@ -354,8 +354,8 @@
   id: BuzzochloricBlood
   localizationStringId: genetics-mutation-name-buzzochloric-blood
   effects:
-#    - !type:ChangeBloodMutationEffect #this causes a crash because an entity gets created during an entity query
-#      bloodReagent: BuzzochloricBees
+    - !type:ChangeBloodMutationEffect #this causes a crash because an entity gets created during an entity query
+      bloodReagent: BuzzochloricBees
     - !type:AddFactionMutationEffect
       faction: Bee
     - !type:ReactToDamageMutationEffect
@@ -368,7 +368,7 @@
     - !type:GiveActionMutationEffect
       instantActions:
         - SpawnBee
-  weight: 100
+  weight: 5
 
 - type: instantAction
   id: SpawnBee
@@ -389,6 +389,7 @@
 - type: mutation
   id: AnaerobicRespiration
   localizationStringId: genetics-mutation-name-anaerobic-respiration
+  weight: 50
   effects:
     - !type:ModifyRespirationMutationEffect
       saturationMultiplier: 5.0
@@ -398,15 +399,24 @@
 - type: mutation
   id: GutFermentationSyndrome
   localizationStringId: genetics-mutation-name-gut-fermentation-syndrome
+  weight: 20
   effects:
     - !type:GutFermentationMutationEffect
     
 - type: mutation
   id: MatterEater
   localizationStringId: genetics-mutation-name-matter-eater
+  weight: 10
   effects:
     - !type:MatterEaterMutationEffect
     
-        
     
+- type: entity
+  name: Urist McMutant
+  parent: MobHuman
+  id: MobHumanMutant
+  components:
+  - type: GeneticSequence
+    forcedActiveMutationsOnInit:
+      - Pyrokinesis
     
