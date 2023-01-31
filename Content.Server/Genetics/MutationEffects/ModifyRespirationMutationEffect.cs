@@ -32,7 +32,7 @@ namespace Content.Server.Genetics.MutationEffects
         [DataField("suffocationDamageMultiplier")]
         public float SuffocationDamageMultiplier = 1.0f;
 
-        public override void Apply(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<RespiratorComponent>(uid, out var respiratorComponent))
             {
@@ -43,7 +43,7 @@ namespace Content.Server.Genetics.MutationEffects
             }
         }
 
-        public override void Remove(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<RespiratorComponent>(uid, out var respiratorComponent))
             {

@@ -3,6 +3,7 @@ using Content.Server.Destructible;
 using Content.Server.Destructible.Thresholds;
 using Content.Server.Destructible.Thresholds.Behaviors;
 using Content.Server.Destructible.Thresholds.Triggers;
+using Content.Shared.Genetics;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
 
@@ -21,7 +22,7 @@ namespace Content.Server.Genetics.MutationEffects
         [DataField("limit")]
         public float Limit = 100.0f;
 
-        public override void Apply(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<DestructibleComponent>(uid, out var destructibleComponent))
             {
@@ -39,7 +40,7 @@ namespace Content.Server.Genetics.MutationEffects
             }
         }
 
-        public override void Remove(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<DestructibleComponent>(uid, out var destructibleComponent))
             {

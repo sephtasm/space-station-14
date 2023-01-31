@@ -28,15 +28,14 @@ namespace Content.Server.Genetics.MutationEffects
         [DataField("bloodMaxVolumeMultiplier")]
         public float BloodMaxVolumeMultiplier = 1.0f;
 
-        public override void Apply(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
-            entityManager.EnsureComponent<MutationsComponent>(uid, out var mutations);
             if (entityManager.TryGetComponent<BloodstreamComponent>(uid, out var bloodstreamComponent))
             {
                 if (BloodReagent != null)
                 {
-                    mutations.SuppressedBloodReagent = bloodstreamComponent.BloodReagent;
-                    SwapBlood(bloodstreamComponent, mutations.SuppressedBloodReagent, BloodReagent);
+                    mutationsComponent.SuppressedBloodReagent = bloodstreamComponent.BloodReagent;
+                    SwapBlood(bloodstreamComponent, mutationsComponent.SuppressedBloodReagent, BloodReagent);
                 }
                 bloodstreamComponent.BloodRefreshAmount *= BloodRefreshBonusMultiplier;
                 bloodstreamComponent.MaxBleedAmount *= MaxBleedAmountMultiplier;
@@ -44,16 +43,15 @@ namespace Content.Server.Genetics.MutationEffects
             }
         }
 
-        public override void Remove(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
-            if (entityManager.TryGetComponent<BloodstreamComponent>(uid, out var bloodstreamComponent) &&
-                entityManager.TryGetComponent<MutationsComponent>(uid, out var mutations))
+            if (entityManager.TryGetComponent<BloodstreamComponent>(uid, out var bloodstreamComponent))
             {
                 // to catch cases when something else changed it after the mutation was applied
                 if (BloodReagent != null && BloodReagent == bloodstreamComponent.BloodReagent)
                 {
-                    bloodstreamComponent.BloodReagent = mutations.SuppressedBloodReagent;
-                    SwapBlood(bloodstreamComponent, BloodReagent, mutations.SuppressedBloodReagent);
+                    bloodstreamComponent.BloodReagent = mutationsComponent.SuppressedBloodReagent;
+                    SwapBlood(bloodstreamComponent, BloodReagent, mutationsComponent.SuppressedBloodReagent);
                 }
                 bloodstreamComponent.BloodRefreshAmount /= BloodRefreshBonusMultiplier;
                 bloodstreamComponent.MaxBleedAmount /= MaxBleedAmountMultiplier;

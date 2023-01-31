@@ -1,5 +1,6 @@
 using Content.Shared.Actions;
 using Content.Shared.Actions.ActionTypes;
+using Content.Shared.Genetics;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype.List;
@@ -19,14 +20,14 @@ namespace Content.Server.Genetics.MutationEffects
         [DataField("instantActions", customTypeSerializer: typeof(PrototypeIdListSerializer<InstantActionPrototype>))]
         public readonly List<string> InstantActions = new();
 
-        public override void Apply(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             var actionsSystem = entityManager.System<SharedActionsSystem>();
             var actionTypes = GetAllActions(entityManager, prototypeManager);
             actionsSystem.AddActions(uid, actionTypes, null);
         }
 
-        public override void Remove(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             var actionsSystem = entityManager.System<SharedActionsSystem>();
             var actionTypes = GetAllActions(entityManager, prototypeManager);

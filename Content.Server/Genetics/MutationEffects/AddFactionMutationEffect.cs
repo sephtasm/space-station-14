@@ -2,6 +2,7 @@ using Content.Server.Body.Components;
 using Content.Server.NPC.Components;
 using Content.Server.NPC.Systems;
 using Content.Shared.Eye.Blinding;
+using Content.Shared.Genetics;
 using JetBrains.Annotations;
 using Robust.Shared.Prototypes;
 
@@ -13,7 +14,7 @@ namespace Content.Server.Genetics.MutationEffects
         [DataField("faction")]
         public string Faction = default!;
 
-        public override void Apply(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<FactionComponent>(uid, out var factionComponent))
             {
@@ -25,7 +26,7 @@ namespace Content.Server.Genetics.MutationEffects
             }
         }
 
-        public override void Remove(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
             if (entityManager.TryGetComponent<FactionComponent>(uid, out var factionComponent))
             {

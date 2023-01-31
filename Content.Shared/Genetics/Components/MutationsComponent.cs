@@ -6,6 +6,9 @@ namespace Content.Shared.Genetics
     [RegisterComponent]
     public sealed class MutationsComponent : Component
     {
+        [DataField("activeMutationIDs")]
+        public HashSet<string> ActiveMutationIDs = new();
+
         [DataField("modifiers")]
         public Dictionary<string, DamageModifierSet> DamageModifiers = new();
 

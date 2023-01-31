@@ -18,21 +18,17 @@ namespace Content.Server.Genetics.MutationEffects
         [DataField("coefficient")]
         public float Coefficient = 1.0f;
 
-        public override void Apply(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
-            entityManager.EnsureComponent<MutationsComponent>(uid, out var mutations);
             DamageModifierSet newSet = new DamageModifierSet();
             newSet.Coefficients[DamageTypeName] = Coefficient;
 
-            mutations.DamageModifiers[source] = newSet;
+            mutationsComponent.DamageModifiers[source] = newSet;
         }
 
-        public override void Remove(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
-            if (entityManager.TryGetComponent<MutationsComponent>(uid, out var damageResistanceMutation))
-            {
-                damageResistanceMutation.DamageModifiers.Remove(source);
-            }
+            mutationsComponent.DamageModifiers.Remove(source);
         }
     }
 

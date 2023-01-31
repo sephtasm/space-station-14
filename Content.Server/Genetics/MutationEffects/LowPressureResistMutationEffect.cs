@@ -11,21 +11,14 @@ namespace Content.Server.Genetics.MutationEffects
         [DataField("lowPressureMultiplier", required: true)]
         public int LowPressureMultiplier = 1;
 
-        public override void Apply(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
-            if (!entityManager.TryGetComponent<MutationsComponent>(uid, out var mutationsComponent))
-            {
-                mutationsComponent = entityManager.AddComponent<MutationsComponent>(uid);
-            }
             mutationsComponent.LowPressureResistances[source] = LowPressureMultiplier;
         }
 
-        public override void Remove(EntityUid uid, string source, IEntityManager entityManager, IPrototypeManager prototypeManager)
+        public override void DoRemove(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
         {
-            if (entityManager.TryGetComponent<MutationsComponent>(uid, out var mutationsComponent))
-            {
-                mutationsComponent.LowPressureResistances.Remove(source);
-            }
+            mutationsComponent.LowPressureResistances.Remove(source);
         }
     }
 
