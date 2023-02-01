@@ -160,7 +160,7 @@ namespace Content.Server.Genetics
                     podStatus = PodStatus.ScanComplete;
                     if (TryComp<GeneticSequenceComponent>(genePod.LastScannedBody, out var geneticSequence))
                     {
-                        geneSequence = GenerateDisplayForAllGenes(geneticSequence.Genes);
+                        geneSequence = GenerateDisplayForAllGenes(geneticSequence.Genes, component.ResearchedMutations);
                     }
                     else
                     {
@@ -177,13 +177,13 @@ namespace Content.Server.Genetics
             _ui.SetUiState(bui, state);
         }
 
-        public List<GeneDisplay> GenerateDisplayForAllGenes(List<Gene> genes)
+        public List<GeneDisplay> GenerateDisplayForAllGenes(List<Gene> genes, Dictionary<long, string> researchedMutations)
         {
 
             List<GeneDisplay> display = new();
             foreach (var gene in genes)
             {
-                if (gene.Type != GeneType.Mutation || gene.Active)
+                if (gene.Type != GeneType.Mutation || gene.Active || researchedMutations.ContainsKey(gene.Blocks[0].Value))
                 {
                     display.Add(new GeneDisplay(gene, string.Join(" ", gene.Blocks.Select(b => b.Display))));
                 }
@@ -299,14 +299,22 @@ namespace Content.Server.Genetics
             if (!TryComp<GeneticSequenceComponent>(genePod.LastScannedBody, out var geneticSequence))
                 return;
             var gene = geneticSequence.Genes[args.Index];
-            component.TargetActivationGene = gene;
 
-            if (!_puzzles.ContainsKey(gene))
+            if (component.ResearchedMutations.ContainsKey(gene.Blocks[0].Value))
             {
-                var solution = gene.Blocks[0].Display;
-                _puzzles[gene] = SharedGenetics.GeneratePuzzle(solution, _random);
+                DoMutationActivate(uid, gene, component.GenePod.Value, genePod);
             }
-            component.Puzzle = _puzzles[gene];
+            else
+            {
+                component.TargetActivationGene = gene;
+
+                if (!_puzzles.ContainsKey(gene))
+                {
+                    var solution = gene.Blocks[0].Display;
+                    _puzzles[gene] = SharedGenetics.GeneratePuzzle(solution, _random);
+                }
+                component.Puzzle = _puzzles[gene];
+            }
 
             UpdateUserInterface(uid, component, true);
         }
@@ -377,7 +385,7 @@ namespace Content.Server.Genetics
             msg.AddMarkup(Loc.GetString("genetics-console-print-report-title", ("name", patientName)));
             if (TryComp<GeneticSequenceComponent>(genePod.LastScannedBody, out var geneticSequence))
             {
-                var geneDisplay = GenerateDisplayForAllGenes(geneticSequence.Genes);
+                var geneDisplay = GenerateDisplayForAllGenes(geneticSequence.Genes, console.ResearchedMutations);
 
                 foreach (var display in geneDisplay)
                 {
@@ -447,9 +455,8 @@ namespace Content.Server.Genetics
 
             if (component.TargetActivationGene != null && slnDiff == 0)
             {
-                _geneticsSystem.ActivateMutation((EntityUid) genePod.BodyContainer.ContainedEntity!, component.TargetActivationGene, uid);
+                DoMutationActivate(uid, component.TargetActivationGene, component.GenePod.Value, genePod);
                 component.TargetActivationGene = null;
-                _audio.PlayPvs(genePod.EditGeneSuccessSound, component.GenePod.Value);
             }
             else
             {
@@ -458,5 +465,10 @@ namespace Content.Server.Genetics
             UpdateUserInterface(uid, component, true);
         }
 
+        private void DoMutationActivate(EntityUid uid, Gene gene, EntityUid podUid, GenePodComponent genePod)
+        {
+            _geneticsSystem.ActivateMutation((EntityUid) genePod.BodyContainer.ContainedEntity!, gene, uid);
+            _audio.PlayPvs(genePod.EditGeneSuccessSound, podUid);
+        }
     }
 }
