@@ -48,6 +48,8 @@
     - !type:DamageResistanceMutationEffect
       damageTypeName: Heat
       coefficient: 0.75
+    - !type:TemperateThresholdMutationEffect
+      heatDamageThresholdMultipliers: 10.0
   weight: 50
   
 - type: mutation
@@ -57,6 +59,8 @@
     - !type:DamageResistanceMutationEffect
       damageTypeName: Cold
       coefficient: 0.75
+    - !type:TemperateThresholdMutationEffect
+      coldDamageThresholdMultipliers: 0.05
   weight: 50
   
 - type: mutation
