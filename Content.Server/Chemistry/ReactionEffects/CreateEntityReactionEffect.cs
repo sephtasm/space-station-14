@@ -1,3 +1,5 @@
+using Content.Server.Spawners.EntitySystems;
+using Content.Shared.Chemistry.Reaction;
 using Content.Shared.Chemistry.Reagent;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization.TypeSerializers.Implementations.Custom.Prototype;
@@ -22,11 +24,12 @@ public sealed class CreateEntityReactionEffect : ReagentEffect
     public override void Effect(ReagentEffectArgs args)
     {
         var transform = args.EntityManager.GetComponent<TransformComponent>(args.SolutionEntity);
+        var spawnSystem = args.EntityManager.System<QueuedSpawnSystem>();
         var quantity = Number * args.Quantity.Int();
 
         for (var i = 0; i < quantity; i++)
         {
-            args.EntityManager.SpawnEntity(Entity, transform.MapPosition);
+            spawnSystem.QueueSpawnEntity(Entity, transform.MapPosition);
 
             // TODO figure out how to spawn inside of containers
             // e.g. cheese:

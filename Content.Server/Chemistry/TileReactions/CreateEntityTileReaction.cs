@@ -1,3 +1,4 @@
+using Content.Server.Spawners.EntitySystems;
 using Content.Shared.Chemistry.Reaction;
 using Content.Shared.Chemistry.Reagent;
 using Content.Shared.FixedPoint;
@@ -59,7 +60,9 @@ public sealed class CreateEntityTileReaction : ITileReaction
             var yoffs = random.NextFloat(-RandomOffsetMax, RandomOffsetMax);
 
             var pos = tile.GridPosition().Offset(new Vector2(0.5f + xoffs, 0.5f + yoffs));
-            entMan.QueueSpawnEntity(Entity, pos);
+
+            var spawnSystem = entMan.System<QueuedSpawnSystem>(); // bad hack. figure out a better way to do this
+            spawnSystem.QueueSpawnEntity(Entity, pos);
 
             return Usage;
         }
