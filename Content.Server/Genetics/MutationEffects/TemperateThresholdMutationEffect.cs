@@ -10,10 +10,10 @@ namespace Content.Server.Genetics.MutationEffects
     public sealed class TemperateThresholdMutationEffect : MutationEffect
     {
 
-        [DataField("heatDamageThresholdMultipliers", required: true)]
+        [DataField("heatDamageThresholdMultipliers")]
         public float HeatDamageThresholdMultiplier = 1.0f;
 
-        [DataField("coldDamageThresholdMultipliers", required: true)]
+        [DataField("coldDamageThresholdMultipliers")]
         public float ColdDamageThresholdMultiplier = 1.0f;
 
         protected override void DoApply(EntityUid uid, string source, MutationsComponent mutationsComponent, IEntityManager entityManager, IPrototypeManager prototypeManager)
