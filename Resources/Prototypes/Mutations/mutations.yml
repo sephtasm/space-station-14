@@ -422,5 +422,5 @@
   components:
   - type: GeneticSequence
     forcedActiveMutationsOnInit:
-      - Pyrokinesis
+      - BuzzochloricBlood
     

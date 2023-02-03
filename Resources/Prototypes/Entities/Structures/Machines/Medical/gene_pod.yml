@@ -41,6 +41,7 @@
   - type: ContainerContainer
     containers:
       genePod-bodyContainer: !type:ContainerSlot
+      genePod-beakerSlot: !type:ContainerSlot
       machine_board: !type:Container
       machine_parts: !type:Container
   - type: SignalReceiver
@@ -70,9 +71,19 @@
   - type: UpgradePowerDraw
     powerDrawMultiplier: 0.75
     scaling: Exponential
+  - type: ItemSlots
+    slots:
+      genePod-beakerSlot:
+        whitelist:
+          components:
+          - FitsInDispenser
+  - type: SolutionContainerManager
+    solutions:
+      buffer: {}
   - type: EmptyOnMachineDeconstruct
     containers:
     - genePod-bodyContainer
+    - genePod-beakerSlot
 
 - type: entity
   parent: BaseComputer

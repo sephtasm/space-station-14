@@ -12,6 +12,7 @@ using Content.Shared.Damage;
 using Content.Server.Genetics.Components;
 using static Content.Shared.Humanoid.HumanoidAppearanceState;
 using static Content.Shared.Humanoid.SharedHumanoidAppearanceSystem;
+using Robust.Shared.GameObjects;
 
 namespace Content.Server.Genetics
 {
@@ -60,7 +61,7 @@ namespace Content.Server.Genetics
             PopulateMutationIndex();
             GenerateObfuscationKeys();
 
-            SubscribeLocalEvent<GeneticSequenceComponent, ComponentInit>(OnInit);
+            SubscribeLocalEvent<GeneticSequenceComponent, ComponentStartup>(OnStartup);
             SubscribeLocalEvent<HumanoidAppearanceUpdateEvent>(OnAppearanceUpdate);
             SubscribeLocalEvent<ActivateMutationEvent>(OnMutationActivate);
             SubscribeLocalEvent<DeactivateMutationEvent>(OnMutationDeactivate);
@@ -470,32 +471,35 @@ namespace Content.Server.Genetics
             return;
 
         }
-        private void OnInit(EntityUid uid, GeneticSequenceComponent component, ComponentInit args)
+        private void OnStartup(EntityUid uid, GeneticSequenceComponent component, ComponentStartup args)
         {
-            component.Genes = GenerateGeneticSequence(uid, component.RandomDormantMutationsOnInit);
-
-            if (component.ForcedActiveMutationsOnInit.Count == 0)
-                return;
-
-            foreach (var (key, value) in _mutationsIndex)
+            if (component.Genes.Count == 0)
             {
-                if (component.ForcedActiveMutationsOnInit.Contains(value.ID))
+                component.Genes = GenerateGeneticSequence(uid, component.RandomDormantMutationsOnInit);
+
+                if (component.ForcedActiveMutationsOnInit.Count == 0)
+                    return;
+
+                foreach (var (key, value) in _mutationsIndex)
                 {
-                    var found = false;
-                    foreach (Gene g in component.Genes)
+                    if (component.ForcedActiveMutationsOnInit.Contains(value.ID))
                     {
-                        if (g.Type == GeneType.Mutation && g.Blocks[0].Value == key)
+                        var found = false;
+                        foreach (Gene g in component.Genes)
                         {
-                            ActivateMutation(uid, g);
-                            found = true;
-                            break;
+                            if (g.Type == GeneType.Mutation && g.Blocks[0].Value == key)
+                            {
+                                ActivateMutation(uid, g);
+                                found = true;
+                                break;
+                            }
                         }
-                    }
-                    if (!found)
-                    {
-                        var mutationGene = CreateGeneForMutation(key);
-                        component.Genes.Add(mutationGene);
-                        ActivateMutation(uid, mutationGene);
+                        if (!found)
+                        {
+                            var mutationGene = CreateGeneForMutation(key);
+                            component.Genes.Add(mutationGene);
+                            ActivateMutation(uid, mutationGene);
+                        }
                     }
                 }
             }

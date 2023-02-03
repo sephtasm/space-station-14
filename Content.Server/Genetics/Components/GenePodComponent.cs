@@ -77,6 +77,9 @@ namespace Content.Server.Genetics.GenePod
         [DataField("editGeneFailedSound")]
         public readonly SoundSpecifier EditGeneFailedSound = new SoundPathSpecifier("/Audio/Machines/custom_deny.ogg");
 
+        [DataField("clickSound"), ViewVariables(VVAccess.ReadWrite)]
+        public SoundSpecifier ClickSound = new SoundPathSpecifier("/Audio/Machines/machine_switch.ogg");
+
         public override bool DragDropOn(DragDropEvent eventArgs)
         {
             return true;
