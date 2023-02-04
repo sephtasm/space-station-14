@@ -27,11 +27,15 @@ namespace Content.Client.GeneticsConsole.UI
             _window.OnSequenceButtonPressed += _ => SendMessage(new SequenceButtonPressedMessage());
             _window.OnRepairButtonPressed += (args, btnRef) => SendMessage(new RepairButtonPressedMessage(btnRef.Index));
             _window.OnActivateButtonPressed += (args) => SendMessage(new ActivateButtonPressedMessage());
+            _window.OnSpliceButtonPressed += (args, btnRef) => SendMessage(new GeneSpliceButtonPressedMessage(btnRef.Index));
             _window.OnCancelActivationButtonPressed += (args) => SendMessage(new CancelActivationButtonPressedMessage());
             _window.OnPrintReportButtonPressed += (args) => SendMessage(new PrintReportButtonPressedMessage());
             _window.OnStartActivationButtonPressed += (args, btnRef) => SendMessage(new StartActivationButtonPressedMessage(btnRef.Index));
             _window.OnUnusedBlockButtonPressed += (args, btnRef) => SendMessage(new UnusedBlockButtonPressedMessage(btnRef.Index));
             _window.OnUsedBlockButtonPressed += (args, btnRef) => SendMessage(new UsedBlockButtonPressedMessage(btnRef.Index));
+
+            _window.OnXferToBeakerButtonPressed += (args) => SendMessage(new XferToBeakerButtonPressedMessage());
+            _window.OnXferFromBeakerButtonPressed += (args) => SendMessage(new XferFromBeakerButtonPressedMessage());
 
             _window.OnFillBasePairButtonPressed += (args, ev) => SendMessage(ev);
 
@@ -67,6 +71,8 @@ namespace Content.Client.GeneticsConsole.UI
             if (_window == null)
                 return;
             _window.SetProgressBarStatus(state.PodStatus == PodStatus.ScanStarted, (float) state.TimeRemaining.Divide(state.TotalTime));
+            _window.SetMutagenBufferLevel(state.MutagenLevel);
+            
             if (!state.PodConnected)
             {
                 DisplayStatusMessage(Loc.GetString("genetics-console-ui-window-no-pod-connected"));
@@ -108,7 +114,7 @@ namespace Content.Client.GeneticsConsole.UI
                     var patientName = (state.PodBodyUid.HasValue) ? _entityManager.GetComponent<MetaDataComponent>(state.PodBodyUid.Value).EntityName
                         : Loc.GetString("genetics-console-ui-window-patient-name-unknown");
                     _window.SetActiveScreen(GeneticsConsoleScreen.GeneRepair);
-                    _window.SetGeneRepairPanel(patientName, state.SequencedGenes, state.KnownMutations);
+                    _window.SetGeneRepairPanel(patientName, state.SequencedGenes, state.KnownMutations, state.MutagenForSplice);
                 } 
             }
             if (dirty) _window.SetGeneDirty();

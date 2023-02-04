@@ -1,0 +1,73 @@
+# Objects created through mutations
+
+- type: entity
+  parent: BaseWall
+  id: WallCryokinesis
+  name: ice wall
+  components:
+  - type: TimedDespawn
+    lifetime: 20
+  - type: Tag
+    tags:
+      - Wall
+  - type: Sprite
+    sprite: Structures/Walls/ice.rsi
+  - type: Icon
+    sprite: Structures/Walls/ice.rsi
+  - type: Destructible
+    thresholds:
+    - trigger:
+        !type:DamageTrigger
+        damage: 50
+      behaviors:
+      - !type:SpawnEntitiesBehavior
+        spawn:
+          PuddleWater:
+            min: 1
+            max: 1
+      - !type:DoActsBehavior
+        acts: [ "Destruction" ]
+  - type: IconSmooth
+    key: walls
+    base: ice
+
+- type: entity
+  name: ice
+  id: PuddleIce
+  description: A patch of ice.
+  parent: EvaporatingPuddle
+  components:
+  - type: Sprite
+    sprite: Fluids/smear.rsi
+    state: smear-1
+    netsync: false
+  - type: Puddle
+    slipThreshold: 3  
+  - type: Slippery
+    launchForwardsMultiplier: 2.0
+  - type: StepTrigger
+  - type: SolutionContainerManager
+    solutions:
+      puddle:
+        maxVol: 1000
+        reagents:
+        - ReagentId: Water
+          Quantity: 5
+    
+- type: entity
+  name: water
+  id: PuddleWater
+  description: A puddle of water.
+  parent: EvaporatingPuddle
+  components:
+  - type: Sprite
+    sprite: Fluids/splatter.rsi
+    state: splatter-0
+    netsync: false
+  - type: SolutionContainerManager
+    solutions:
+      puddle:
+        maxVol: 1000
+        reagents:
+        - ReagentId: Water
+          Quantity: 10

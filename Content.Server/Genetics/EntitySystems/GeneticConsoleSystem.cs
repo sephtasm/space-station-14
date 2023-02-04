@@ -16,6 +16,16 @@ using Robust.Shared.Utility;
 using Content.Shared.Popups;
 using Content.Server.Paper;
 using Robust.Shared.Random;
+using Content.Server.Chemistry.Components.SolutionManager;
+using Content.Shared.FixedPoint;
+using Content.Server.Chemistry.EntitySystems;
+using Content.Shared.Chemistry;
+using Content.Shared.Containers.ItemSlots;
+using Content.Server.Chemistry.Components;
+using Robust.Shared.Profiling;
+using Content.Server.Body.Components;
+using Content.Server.Body.Systems;
+using Content.Shared.Chemistry.Reagent;
 
 namespace Content.Server.Genetics
 {
@@ -24,8 +34,12 @@ namespace Content.Server.Genetics
         [Dependency] private readonly IRobustRandom _random = default!;
         [Dependency] private readonly SharedAudioSystem _audio = default!;
         [Dependency] private readonly DamageableSystem _damageableSystem = default!;
+        [Dependency] private readonly BloodstreamSystem _bloodstreamSystem = default!;
+        [Dependency] private readonly SolutionContainerSystem _solutions = default!;
         [Dependency] private readonly IEntityManager _entityManager = default!;
         [Dependency] private readonly GeneticsSystem _geneticsSystem = default!;
+        [Dependency] private readonly ItemSlotsSystem _itemSlotsSystem = default!;
+        [Dependency] private readonly SolutionContainerSystem _solutionContainerSystem = default!;
         [Dependency] private readonly PaperSystem _paper = default!;
         [Dependency] private readonly SharedPopupSystem _popup = default!;
         [Dependency] private readonly IPrototypeManager _prototypeManager = default!;
@@ -48,9 +62,13 @@ namespace Content.Server.Genetics
             SubscribeLocalEvent<GeneticsConsoleComponent, CancelActivationButtonPressedMessage>(OnCancelActivationButton);
             SubscribeLocalEvent<GeneticsConsoleComponent, ActivateButtonPressedMessage>(OnActivateButton);
             SubscribeLocalEvent<GeneticsConsoleComponent, PrintReportButtonPressedMessage>(OnPrintReportButton);
+            SubscribeLocalEvent<GeneticsConsoleComponent, GeneSpliceButtonPressedMessage>(OnGeneSpliceButton);
             SubscribeLocalEvent<GeneticsConsoleComponent, UnusedBlockButtonPressedMessage>(OnUnusedBlockButton);
             SubscribeLocalEvent<GeneticsConsoleComponent, UsedBlockButtonPressedMessage>(OnUsedBlockButton);
             SubscribeLocalEvent<GeneticsConsoleComponent, FillBasePairButtonPressedMessage>(OnFillBasePairButton);
+
+            SubscribeLocalEvent<GeneticsConsoleComponent, XferToBeakerButtonPressedMessage>(OnXferToBeakerButton);
+            SubscribeLocalEvent<GeneticsConsoleComponent, XferFromBeakerButtonPressedMessage>(OnXferFromBeakerButton);
 
             SubscribeLocalEvent<GeneticsConsoleComponent, MapInitEvent>(OnMapInit);
             SubscribeLocalEvent<GeneticsConsoleComponent, NewLinkEvent>(OnNewLink);
@@ -138,10 +156,14 @@ namespace Content.Server.Genetics
             var podConnected = false;
             var podInRange = false;
             EntityUid? body = null;
+            var mutagenForSplice = false;
             var timeRemaining = TimeSpan.Zero;
             var totalTime = TimeSpan.Zero;
+            var mutagenLevel = FixedPoint2.Zero;
             List<GeneDisplay> geneSequence = new();
-            if (component.GenePod != null && TryComp<GenePodComponent>(component.GenePod, out var genePod))
+            if (component.GenePod != null &&
+                TryComp<GenePodComponent>(component.GenePod, out var genePod) &&
+                TryComp<SolutionContainerManagerComponent>(component.GenePod, out var slnManager))
             {
                 podConnected = true;
                 podInRange = component.GenePodInRange;
@@ -149,6 +171,10 @@ namespace Content.Server.Genetics
                 body = genePod.BodyContainer.ContainedEntity;
                 if (genePod.Scanning) timeRemaining = _timing.CurTime - genePod.StartTime;
                 totalTime = genePod.SequencingDuration * genePod.SequencingDurationMulitplier;
+
+                var bufferSln = slnManager.Solutions["buffer"];
+                mutagenLevel = (bufferSln.Volume / bufferSln.MaxVolume);
+                mutagenForSplice = (bufferSln.Volume >= genePod.BaseMutagenNeededForSplice);
 
                 if (body == null) { podStatus = PodStatus.PodEmpty; }
                 else if (genePod.Scanning)
@@ -171,7 +197,8 @@ namespace Content.Server.Genetics
 
             }
 
-            var state = new GeneticsConsoleBoundUserInterfaceState(body, podStatus, podConnected, podInRange, timeRemaining, totalTime, geneSequence,
+            var state = new GeneticsConsoleBoundUserInterfaceState(body, podStatus, podConnected, podInRange,
+                mutagenLevel.Float(), mutagenForSplice, timeRemaining, totalTime, geneSequence,
                 component.ResearchedMutations, component.TargetActivationGene, component.Puzzle, forceUpdate);
             var bui = _ui.GetUi(uid, GeneticsConsoleUiKey.Key);
             _ui.SetUiState(bui, state);
@@ -352,7 +379,6 @@ namespace Content.Server.Genetics
             }
             UpdateUserInterface(uid, component, true);
         }
-
         private void OnPrintReportButton(EntityUid uid, GeneticsConsoleComponent component, PrintReportButtonPressedMessage args)
         {
             if (!TryComp<GenePodComponent>(component.GenePod, out var genePod))
@@ -372,6 +398,43 @@ namespace Content.Server.Genetics
             _popup.PopupEntity(Loc.GetString("genetics-console-print-popup"), uid);
             _paper.SetContent(report, msg.ToMarkup());
             UpdateUserInterface(uid, component);
+        }
+
+        private void OnXferToBeakerButton(EntityUid uid, GeneticsConsoleComponent component, XferToBeakerButtonPressedMessage args)
+        {
+            TransferReagents(component.GenePod, true);
+        }
+
+        private void OnXferFromBeakerButton(EntityUid uid, GeneticsConsoleComponent component, XferFromBeakerButtonPressedMessage args)
+        {
+            TransferReagents(component.GenePod, false);
+        }
+
+        private void TransferReagents(EntityUid? podEntity, bool fromBuffer)
+        {
+            if (podEntity == null || !TryComp<GenePodComponent>(podEntity, out var genePod))
+                return;
+
+            var container = _itemSlotsSystem.GetItemOrNull(podEntity.Value, GenePodComponent.InputSlotName);
+            if (container is null ||
+                !_solutionContainerSystem.TryGetFitsInDispenser(container.Value, out var containerSolution) ||
+                !_solutionContainerSystem.TryGetSolution(podEntity.Value, GenePodComponent.SolutionName, out var bufferSolution))
+            {
+                return;
+            }
+
+            if (fromBuffer) // Buffer to container
+            {
+                FixedPoint2 amount = containerSolution.AvailableVolume;
+                amount = bufferSolution.RemoveReagent(GenePodComponent.MutationReagentName, amount);
+                _solutionContainerSystem.TryAddReagent(container.Value, containerSolution, GenePodComponent.MutationReagentName, amount, out var _);
+            }
+            else // Container to buffer
+            {
+                FixedPoint2 amount = containerSolution.GetReagentQuantity(GenePodComponent.MutationReagentName);
+                _solutionContainerSystem.TryRemoveReagent(container.Value, containerSolution, GenePodComponent.MutationReagentName, amount);
+                bufferSolution.AddReagent(GenePodComponent.MutationReagentName, amount);
+            }
         }
 
         private FormattedMessage? GetGeneticsScanMessage(GeneticsConsoleComponent console, GenePodComponent genePod, string patientName)
@@ -462,6 +525,27 @@ namespace Content.Server.Genetics
             {
                 _audio.PlayPvs(genePod.EditGeneFailedSound, component.GenePod.Value);
             }
+            UpdateUserInterface(uid, component, true);
+        }
+
+        private void OnGeneSpliceButton(EntityUid uid, GeneticsConsoleComponent component, GeneSpliceButtonPressedMessage args)
+        {
+            if (!TryComp<GenePodComponent>(component.GenePod, out var genePod))
+                return;
+            if (!TryComp<GeneticSequenceComponent>(genePod.LastScannedBody, out var geneticSequence))
+                return;
+            if (!_solutionContainerSystem.TryGetSolution(component.GenePod.Value, GenePodComponent.SolutionName, out var bufferSolution))
+                return;
+
+            FixedPoint2 amount = genePod.BaseMutagenNeededForSplice;
+            if (TryComp<BloodstreamComponent>(genePod.LastScannedBody, out var bloodstream))
+            {
+                var removedSolution = _solutions.SplitSolution(component.GenePod.Value, bufferSolution, amount);
+                _bloodstreamSystem.TryAddToChemicals(genePod.LastScannedBody.Value, removedSolution, bloodstream);
+                removedSolution.DoEntityReaction(genePod.LastScannedBody.Value, ReactionMethod.Injection);
+            }
+
+            _geneticsSystem.AddAndActivateMutation(genePod.LastScannedBody.Value, geneticSequence, (uint) args.MutationId);
             UpdateUserInterface(uid, component, true);
         }
 

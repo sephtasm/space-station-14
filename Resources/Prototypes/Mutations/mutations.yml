@@ -1,49 +1,11 @@
 # Mutations
-
-
-#Negative 
-
-- type: mutation
-  id: Blindness
-  localizationStringId: genetics-mutation-name-blindness
-  effects: 
-    - !type:BlindnessMutationEffect
-      severity: 6
-  weight: 100
   
-# Acid Blood
-- type: mutation
-  id: AcidBlood
-  localizationStringId: genetics-mutation-name-acid-blood
-  effects:
-    - !type:ChangeBloodMutationEffect
-      bloodReagent: FluorosulfuricAcid
-  weight: 80
-  
-- type: mutation
-  id: Hemophilia
-  localizationStringId: genetics-mutation-name-hemophilia
-  effects:
-    - !type:ChangeBloodMutationEffect
-      MaxBleedAmountMultiplier: 1.5
-    - !type:DamageResistanceMutationEffect
-      damageTypeName: Bloodloss
-      coefficient: 1.5
-  weight: 100
-  
-- type: mutation
-  id: Anemia
-  localizationStringId: genetics-mutation-name-anemia
-  effects:
-    - !type:ChangeBloodMutationEffect
-      bloodMaxVolumeMultiplier: 0.67
-  weight: 100
-  
-# Resistances
+# Environmental Adaptation
   
 - type: mutation
   id: HeatResistance
   localizationStringId: genetics-mutation-name-heat-resistance
+  classificationStringId: genetics-mutation-classification-environmental-adaptation
   effects:
     - !type:DamageResistanceMutationEffect
       damageTypeName: Heat
@@ -55,6 +17,7 @@
 - type: mutation
   id: ColdResistance
   localizationStringId: genetics-mutation-name-cold-resistance
+  classificationStringId: genetics-mutation-classification-environmental-adaptation
   effects:
     - !type:DamageResistanceMutationEffect
       damageTypeName: Cold
@@ -66,6 +29,7 @@
 - type: mutation
   id: ShockResistance
   localizationStringId: genetics-mutation-name-shock-resistance
+  classificationStringId: genetics-mutation-classification-environmental-adaptation
   effects:
     - !type:DamageResistanceMutationEffect
       damageTypeName: Shock
@@ -75,6 +39,7 @@
 - type: mutation
   id: PoisonResistance
   localizationStringId: genetics-mutation-name-poison-resistance
+  classificationStringId: genetics-mutation-classification-environmental-adaptation
   effects:
     - !type:DamageResistanceMutationEffect
       damageTypeName: Poison
@@ -84,17 +49,18 @@
 - type: mutation
   id: SpaceResistance
   localizationStringId: genetics-mutation-name-space-resistance
+  classificationStringId: genetics-mutation-classification-environmental-adaptation
   effects:
     - !type:LowPressureResistMutationEffect
       lowPressureMultiplier: 1000
   weight: 20
   
-  
-  # Pyrokinesis
-  
+# Energy Manipulation
+
 - type: mutation
   id: Pyrokinesis
   localizationStringId: genetics-mutation-name-pyrokinesis
+  classificationStringId: genetics-mutation-classification-energy-manipulation
   effects:
     - !type:GiveActionMutationEffect
       worldActions:
@@ -104,112 +70,10 @@
         - PyrokineticNova
   weight: 5
 
-- type: worldTargetAction
-  id: PyrokineticBurst
-  name: action-name-spell-pyrokinetic-burst
-  description: action-description-spell-pyrokinetic-burst
-  useDelay: 1
-  itemIconStyle: BigAction
-  checkCanAccess: false
-  range: 60
-  sound: !type:SoundPathSpecifier
-    path: /Audio/Weapons/Guns/Gunshots/flaregun.ogg
-  icon:
-    sprite: Objects/Magic/magicactions.rsi
-    state: impact_laser
-  serverEvent: !type:ProjectileSpellEvent
-    prototype: ProjectilePyrokineticBurst
-    posData: !type:TargetCasterPos
-    
-- type: entity
-  id: ProjectilePyrokineticBurst
-  name: pk fire
-  description: PSI-based fire attack.
-  parent: BaseBullet
-  noSpawn: true
-  components:
-  - type: Sprite
-    sprite: Objects/Weapons/Guns/Projectiles/magic.rsi
-    layers:
-    - state: infernoshot
-  - type: Projectile
-    damage:
-      types:
-        Heat: 10
-
-- type: worldTargetAction
-  id: PyrokineticBlast
-  name: action-name-spell-pyrokinetic-blast
-  description: action-description-spell-pyrokinetic-blast
-  useDelay: 5
-  itemIconStyle: BigAction
-  checkCanAccess: false
-  range: 60
-  sound: !type:SoundPathSpecifier
-    path: /Audio/Magic/fireball.ogg
-  icon:
-    sprite: Objects/Magic/magicactions.rsi
-    state: fireball
-  serverEvent: !type:ProjectileSpellEvent
-    prototype: ProjectilePyrokineticBlast
-    posData: !type:TargetCasterPos
-    
-- type: entity
-  id: ProjectilePyrokineticBlast
-  name: pk fireball
-  description: A large PSI-based fire ball.
-  parent: BulletRocket
-  noSpawn: true
-  components:
-  - type: Sprite
-    sprite: Objects/Weapons/Guns/Projectiles/magic.rsi
-    layers:
-    - state: fireball
-  - type: Explosive
-    explosionType: Inferno
-    maxIntensity: 15
-    intensitySlope: 5
-    totalIntensity: 50
-    maxTileBreak: 0
-    fireStacks: 2
-
-- type: instantAction
-  id: PyrokineticNova
-  name: action-name-spell-pyrokinetic-nova
-  description: action-description-spell-pyrokinetic-nova
-  useDelay: 60
-  itemIconStyle: BigAction
-  icon:
-    sprite: Objects/Magic/magicactions.rsi
-    state: spell_default
-  serverEvent: !type:InstantSpawnSpellEvent
-    preventCollide: false
-    prototype: SpawnedExplosion
-    
-- type: entity
-  id: SpawnedExplosion
-  name: immediate explosion
-  description: This will result in an immediate explosion.
-  noSpawn: true
-  components:
-  - type: ActiveTimerTrigger
-    timeRemaining: 0.0
-  - type: ExplodeOnTrigger
-  #- type: FlashOnTrigger
-  - type: DeleteOnTrigger
-  - type: Explosive
-    explosionType: Inferno
-    maxIntensity: 25
-    intensitySlope: 3
-    totalIntensity: 150
-    maxTileBreak: 0
-    fireStacks: 3
-    
-# Cryokinesis
-
 - type: mutation
   id: Cryokinesis
   localizationStringId: genetics-mutation-name-cryokinesis
+  classificationStringId: genetics-mutation-classification-energy-manipulation
   effects:
     - !type:GiveActionMutationEffect
       worldActions:
@@ -217,148 +81,26 @@
       instantActions:
         - IceWall
   weight: 20
-    
-- type: instantAction
-  id: IceWall
-  name: action-name-spell-icewall
-  description: action-description-spell-icewall
-  useDelay: 20
-  itemIconStyle: BigAction
-  sound: !type:SoundPathSpecifier
-    path: /Audio/Magic/forcewall.ogg
-  icon:
-    sprite: Objects/Magic/magicactions.rsi
-    state: shield
-  serverEvent: !type:InstantSpawnSpellEvent
-    prototype: WallCryokinesis
-    posData: !type:TargetInFront
-    preventCollide: false
-    
-- type: worldTargetAction
-  id: GroundIce
-  name: action-name-spell-ground-ice
-  description: action-description-spell-ground-ice
-  useDelay: 20
-  range: 5
-  itemIconStyle: BigAction
-  sound: !type:SoundPathSpecifier
-    path: /Audio/Magic/forcewall.ogg
-  icon:
-    sprite: Objects/Magic/magicactions.rsi
-    state: shield
-  serverEvent: !type:WorldSpawnSpellEvent
-    prototypes:
-      - id: PuddleIce
-
-- type: entity
-  parent: BaseWall
-  id: WallCryokinesis
-  name: ice wall
-  components:
-  - type: TimedDespawn
-    lifetime: 20
-  - type: Tag
-    tags:
-      - Wall
-  - type: Sprite
-    sprite: Structures/Walls/ice.rsi
-  - type: Icon
-    sprite: Structures/Walls/ice.rsi
-  - type: Destructible
-    thresholds:
-    - trigger:
-        !type:DamageTrigger
-        damage: 50
-      behaviors:
-      - !type:SpawnEntitiesBehavior
-        spawn:
-          PuddleWater:
-            min: 1
-            max: 1
-      - !type:DoActsBehavior
-        acts: [ "Destruction" ]
-  - type: IconSmooth
-    key: walls
-    base: ice
-
-- type: entity
-  name: ice
-  id: PuddleIce
-  description: A patch of ice.
-  parent: EvaporatingPuddle
-  components:
-  - type: Sprite
-    sprite: Fluids/smear.rsi # Placeholder
-    state: smear-1
-    netsync: false
-  - type: Puddle
-    slipThreshold: 3  
-  - type: Slippery
-    launchForwardsMultiplier: 2.0
-  - type: StepTrigger
-  - type: SolutionContainerManager
-    solutions:
-      puddle:
-        maxVol: 1000
-        reagents:
-        - ReagentId: Water
-          Quantity: 5
-    
-- type: entity
-  name: water
-  id: PuddleWater
-  description: A puddle of water.
-  parent: EvaporatingPuddle
-  components:
-  - type: Sprite
-    sprite: Fluids/splatter.rsi # Placeholder
-    state: splatter-0
-    netsync: false
-  - type: SolutionContainerManager
-    solutions:
-      puddle:
-        maxVol: 1000
-        reagents:
-        - ReagentId: Water
-          Quantity: 10
-          
-          
-# Force Lightning
-
+  
 - type: mutation
   id: Electrokinesis
   localizationStringId: genetics-mutation-name-electrokinesis
+  classificationStringId: genetics-mutation-classification-energy-manipulation
   effects:
     - !type:GiveActionMutationEffect
       entityTargetActions:
         - ShootLightning
   weight: 10
-  
-- type: entityTargetAction
-  id: ShootLightning
-  name: action-name-spell-shoot-lightning
-  description: action-description-spell-shoot-lightning
-  useDelay: 60
-  range: 9
-  itemIconStyle: BigAction
-  canTargetSelf: false
-  interactOnMiss: false
-  sound: !type:SoundPathSpecifier
-    path: /Audio/Magic/disintegrate.ogg
-  icon:
-    sprite: Objects/Magic/magicactions.rsi
-    state: gib
-  serverEvent: !type:LightningSpellEvent
-    lightningPrototype: Lightning
-    
 
-# Bees
+
+# Blood
 
 - type: mutation
   id: BuzzochloricBlood
   localizationStringId: genetics-mutation-name-buzzochloric-blood
+  classificationStringId: genetics-mutation-classification-blood
   effects:
-    - !type:ChangeBloodMutationEffect #this causes a crash because an entity gets created during an entity query
+    - !type:ChangeBloodMutationEffect
       bloodReagent: BuzzochloricBees
     - !type:AddFactionMutationEffect
       faction: Bee
@@ -374,35 +116,54 @@
         - SpawnBee
   weight: 5
 
-- type: instantAction
-  id: SpawnBee
-  name: action-name-spell-spawn-bees
-  description: action-description-spell-spawn-bees
-  useDelay: 2
-  itemIconStyle: BigAction
-  sound: !type:SoundPathSpecifier
-    path: /Audio/Items/Toys/bee.ogg
-  icon:
-    sprite: Objects/Fun/toys.rsi
-    state: plushie_h
-  serverEvent: !type:InstantSpawnSpellEvent
-    prototype: MobAngryBee
-    posData: !type:TargetInFront
-    preventCollide: false
-    
 - type: mutation
   id: AnaerobicRespiration
   localizationStringId: genetics-mutation-name-anaerobic-respiration
+  classificationStringId: genetics-mutation-classification-blood
   weight: 50
   effects:
     - !type:ModifyRespirationMutationEffect
       saturationMultiplier: 5.0
       maxSaturationMultiplier: 5.0
       suffocationDamageMultiplier: 0.1
-      
+ 
+- type: mutation
+  id: AcidBlood
+  localizationStringId: genetics-mutation-name-acid-blood
+  classificationStringId: genetics-mutation-classification-blood
+  effects:
+    - !type:ChangeBloodMutationEffect
+      bloodReagent: FluorosulfuricAcid
+  weight: 80
+  
+- type: mutation
+  id: Hemophilia
+  localizationStringId: genetics-mutation-name-hemophilia
+  classificationStringId: genetics-mutation-classification-blood
+  effects:
+    - !type:ChangeBloodMutationEffect
+      MaxBleedAmountMultiplier: 1.5
+    - !type:DamageResistanceMutationEffect
+      damageTypeName: Bloodloss
+      coefficient: 1.5
+  weight: 100
+  
+- type: mutation
+  id: Anemia
+  localizationStringId: genetics-mutation-name-anemia
+  classificationStringId: genetics-mutation-classification-blood
+  effects:
+    - !type:ChangeBloodMutationEffect
+      bloodMaxVolumeMultiplier: 0.67
+  weight: 100
+  
+  
+# Gastrological
+
 - type: mutation
   id: GutFermentationSyndrome
   localizationStringId: genetics-mutation-name-gut-fermentation-syndrome
+  classificationStringId: genetics-mutation-classification-gastrological
   weight: 20
   effects:
     - !type:GutFermentationMutationEffect
@@ -410,11 +171,34 @@
 - type: mutation
   id: MatterEater
   localizationStringId: genetics-mutation-name-matter-eater
+  classificationStringId: genetics-mutation-classification-gastrological
   weight: 10
   effects:
     - !type:MatterEaterMutationEffect
+
+# Optical 
+
+- type: mutation
+  id: Blindness
+  localizationStringId: genetics-mutation-name-blindness
+  classificationStringId: genetics-mutation-classification-optical
+  effects: 
+    - !type:BlindnessMutationEffect
+      severity: 6
+  weight: 100
+  
+- type: mutation
+  id: LaserEyes
+  localizationStringId: genetics-mutation-name-laser-eyes
+  classificationStringId: genetics-mutation-classification-optical
+  effects:
+    - !type:GiveActionMutationEffect
+      worldActions:
+        - ShootEyeBeam
+  weight: 10    
     
-    
+
+# For Convenience
 - type: entity
   name: Urist McMutant
   parent: MobHuman
@@ -422,5 +206,5 @@
   components:
   - type: GeneticSequence
     forcedActiveMutationsOnInit:
-      - BuzzochloricBlood
+      - LaserEyes
     

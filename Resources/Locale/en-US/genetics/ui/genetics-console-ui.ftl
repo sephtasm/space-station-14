@@ -1,7 +1,8 @@
 genetics-console-ui-window-title = Genetics Console
 
 genetics-console-ui-window-tab-gene-repair = Genetic Repair
-genetics-console-ui-window-tab-mutations = Mutations
+genetics-console-ui-window-tab-innate-mutations = Innate Mutations
+genetics-console-ui-window-tab-researched-mutations = Gene Splicing
 
 genetics-console-ui-window-ready-to-scan = Patient detected. Press to begin sequencing.
 
@@ -27,6 +28,13 @@ genetics-console-ui-window-gene-repair-header = Actions
 
 genetics-console-ui-window-mutation-type-header = Mutation
 genetics-console-ui-window-gene-activate-header = Actions
+
+genetics-console-ui-window-splice-btn-header = Actions
+genetics-console-ui-window-splice-name-header = Mutation Name
+genetics-console-ui-window-gene-splice-prompt = Splice
+genetics-console-ui-window-gene-splice-no-known = No unlocked mutations.
+genetics-console-ui-window-gene-splice-already-present = Already Present
+genetics-console-ui-window-gene-splice-not-enough-mutagen = Insufficient Mutagen
 
 genetics-console-ui-window-patient-name = Patient Name: {$name}
 genetics-console-ui-window-patient-name-unknown = Unknown

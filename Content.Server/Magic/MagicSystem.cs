@@ -17,10 +17,12 @@ using Content.Shared.Maps;
 using Content.Shared.Physics;
 using Content.Shared.Spawners.Components;
 using Content.Shared.Storage;
+using Content.Shared.Weapons.Ranged;
 using Robust.Server.GameObjects;
 using Robust.Shared.Audio;
 using Robust.Shared.Map;
 using Robust.Shared.Player;
+using Robust.Shared.Profiling;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Random;
 using Robust.Shared.Serialization.Manager;
@@ -65,6 +67,7 @@ public sealed class MagicSystem : EntitySystem
         SubscribeLocalEvent<LightningSpellEvent>(OnLightningSpell);
         SubscribeLocalEvent<WorldSpawnSpellEvent>(OnWorldSpawn);
         SubscribeLocalEvent<ProjectileSpellEvent>(OnProjectileSpell);
+        SubscribeLocalEvent<BeamSpellEvent>(OnBeamSpell);
         SubscribeLocalEvent<ChangeComponentsSpellEvent>(OnChangeComponentsSpell);
     }
 
@@ -182,6 +185,28 @@ public sealed class MagicSystem : EntitySystem
 
             var ent = Spawn(ev.Prototype, spawnCoords);
             _gunSystem.ShootProjectile(ent, mapDirection, userVelocity, ev.Performer);
+        }
+    }
+    private void OnBeamSpell(BeamSpellEvent ev)
+    {
+        if (ev.Handled)
+            return;
+
+        var xform = Transform(ev.Performer);
+        foreach (var pos in GetSpawnPositions(xform, ev.Pos))
+        {
+            // If applicable, this ensures the projectile is parented to grid on spawn, instead of the map.
+            var mapPos = pos.ToMap(EntityManager);
+            EntityCoordinates spawnCoords = _mapManager.TryFindGridAt(mapPos, out var grid)
+                ? pos.WithEntityId(grid.Owner, EntityManager)
+                : new(_mapManager.GetMapEntityId(mapPos.MapId), mapPos.Position);
+
+            var fromMap = mapPos.Position;
+            var toMap = ev.Target.ToMapPos(EntityManager);
+            var mapDirection = toMap - fromMap;
+
+            HitscanPrototype hitscan = _prototypeManager.Index<HitscanPrototype>(ev.Prototype);
+            _gunSystem.FireHitscan(spawnCoords, ev.Performer, mapPos, mapDirection, hitscan);
         }
     }
 

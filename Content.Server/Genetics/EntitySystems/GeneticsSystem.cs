@@ -496,19 +496,24 @@ namespace Content.Server.Genetics
                         }
                         if (!found)
                         {
-                            var mutationGene = CreateGeneForMutation(key);
-                            component.Genes.Add(mutationGene);
-                            ActivateMutation(uid, mutationGene);
+                            AddAndActivateMutation(uid, component, key);
                         }
                     }
                 }
             }
         }
 
+        public void AddAndActivateMutation(EntityUid uid, GeneticSequenceComponent component, uint mutationId)
+        {
+            var mutationGene = CreateGeneForMutation(mutationId);
+            component.Genes.Add(mutationGene);
+            ActivateMutation(uid, mutationGene);
+        }
+
         private List<Gene> GenerateAppearanceGenes(EntityUid uid, HumanoidAppearanceComponent? targetHumanoid = null)
         {
             var geneSequence = new List<Gene>();
-            if (Resolve(uid, ref targetHumanoid))
+            if (Resolve(uid, ref targetHumanoid, false))
             {
                 geneSequence.Add(ConvertToGene(targetHumanoid.Species)); // SPECIES_GENE_INDEX = 0
                 geneSequence.Add(ConvertToGene(targetHumanoid.Sex)); // SEX_GENE_INDEX = 1

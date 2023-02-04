@@ -1,0 +1,34 @@
+    - type: entity
+  id: ProjectilePyrokineticBurst
+  name: pk fire
+  description: PSI-based fire attack.
+  parent: BaseBullet
+  noSpawn: true
+  components:
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Projectiles/magic.rsi
+    layers:
+    - state: infernoshot
+  - type: Projectile
+    damage:
+      types:
+        Heat: 10
+        
+- type: entity
+  id: ProjectilePyrokineticBlast
+  name: pk fireball
+  description: A large PSI-based fire ball.
+  parent: BulletRocket
+  noSpawn: true
+  components:
+  - type: Sprite
+    sprite: Objects/Weapons/Guns/Projectiles/magic.rsi
+    layers:
+    - state: fireball
+  - type: Explosive
+    explosionType: Inferno
+    maxIntensity: 15
+    intensitySlope: 5
+    totalIntensity: 50
+    maxTileBreak: 0
+    fireStacks: 2

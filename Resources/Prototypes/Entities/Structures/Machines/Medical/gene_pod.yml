@@ -79,7 +79,8 @@
           - FitsInDispenser
   - type: SolutionContainerManager
     solutions:
-      buffer: {}
+      buffer:
+        maxVol: 500
   - type: EmptyOnMachineDeconstruct
     containers:
     - genePod-bodyContainer

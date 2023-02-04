@@ -12,9 +12,18 @@ namespace Content.Server.Genetics.GenePod
     public sealed class GenePodComponent : SharedGenePodComponent
     {
         public const string PodPort = "GenePodReceiver";
+        public const string SolutionName = "buffer";
+        public const string InputSlotName = "genePod-beakerSlot";
+        public const string MutationReagentName = "UnstableMutagen";
+
         public ContainerSlot BodyContainer = default!;
-        
+
+        public ContainerSlot BeakerContainer = default!;
+
         public EntityUid? ConnectedConsole;
+
+        [ViewVariables(VVAccess.ReadWrite)]
+        public float BaseMutagenNeededForSplice = 3f;
 
         [ViewVariables(VVAccess.ReadWrite)]
         public float BaseRadiationDamageOnRepair = 3f;

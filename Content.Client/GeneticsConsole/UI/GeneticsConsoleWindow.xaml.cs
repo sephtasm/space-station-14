@@ -16,11 +16,16 @@ namespace Content.Client.GeneticsConsole.UI
         public event Action<BaseButton.ButtonEventArgs>? OnSequenceButtonPressed;
         public event Action<BaseButton.ButtonEventArgs, IndexedButton>? OnRepairButtonPressed;
         public event Action<BaseButton.ButtonEventArgs, IndexedButton>? OnStartActivationButtonPressed;
+        public event Action<BaseButton.ButtonEventArgs, IndexedButton>? OnSpliceButtonPressed;
         public event Action<BaseButton.ButtonEventArgs>? OnActivateButtonPressed;
         public event Action<BaseButton.ButtonEventArgs, IndexedButton>? OnUsedBlockButtonPressed;
         public event Action<BaseButton.ButtonEventArgs, IndexedButton>? OnUnusedBlockButtonPressed;
         public event Action<BaseButton.ButtonEventArgs>? OnCancelActivationButtonPressed;
         public event Action<BaseButton.ButtonEventArgs>? OnPrintReportButtonPressed;
+
+        public event Action<BaseButton.ButtonEventArgs>? OnXferToBeakerButtonPressed;
+        public event Action<BaseButton.ButtonEventArgs>? OnXferFromBeakerButtonPressed;
+
 
         public event Action<BaseButton.ButtonEventArgs, FillBasePairButtonPressedMessage>? OnFillBasePairButtonPressed;
 
@@ -56,6 +61,9 @@ namespace Content.Client.GeneticsConsole.UI
             BtnCancelActivation.OnPressed += a => OnCancelActivationButtonPressed?.Invoke(a);
             BtnPrint.OnPressed += a => OnPrintReportButtonPressed?.Invoke(a);
 
+            BtnXferToBeaker.OnPressed += a => OnXferToBeakerButtonPressed?.Invoke(a);
+            BtnXferFromBeaker.OnPressed += a => OnXferFromBeakerButtonPressed?.Invoke(a);
+
             BtnFillAsA.OnPressed += a => SendFillBasePairEvent(a, Base.A);
             BtnFillAsT.OnPressed += a => SendFillBasePairEvent(a, Base.T);
             BtnFillAsG.OnPressed += a => SendFillBasePairEvent(a, Base.G);
@@ -65,15 +73,14 @@ namespace Content.Client.GeneticsConsole.UI
             BtnFillCancel.OnPressed += a => OnCancelFillBasePairButtonPressed(a);
 
             CTabContainer.SetTabTitle(0, Loc.GetString("genetics-console-ui-window-tab-gene-repair"));
-            CTabContainer.SetTabTitle(1, Loc.GetString("genetics-console-ui-window-tab-mutations"));
+            CTabContainer.SetTabTitle(1, Loc.GetString("genetics-console-ui-window-tab-innate-mutations"));
+            CTabContainer.SetTabTitle(2, Loc.GetString("genetics-console-ui-window-tab-researched-mutations"));
         }
 
         public void SetGeneDirty()
         {
             _geneDirty = true;
         }
-
-
 
         private PanelContainer CreateBoxForBP(BasePair bp, bool top, int blockIndex, int pairIndex)
         {
@@ -244,7 +251,7 @@ namespace Content.Client.GeneticsConsole.UI
             return panelContainer;
         }
 
-        public void SetGeneRepairPanel(string patientName, List<GeneDisplay> geneDisplays, Dictionary<long, string> knownMutations)
+        public void SetGeneRepairPanel(string patientName, List<GeneDisplay> geneDisplays, Dictionary<long, string> knownMutations, bool mutagenForSplice)
         {
             if (!_geneDirty) return;
             _geneDirty = false;
@@ -252,6 +259,7 @@ namespace Content.Client.GeneticsConsole.UI
             PatientName.Text = Loc.GetString("genetics-console-ui-window-patient-name", ("name", patientName));
             GeneRepairTable.RemoveAllChildren();
             MutationTable.RemoveAllChildren();
+            var presentMutations = new HashSet<long>();
             var index = 0;
             foreach (var geneDisplay in geneDisplays)
             {
@@ -270,6 +278,7 @@ namespace Content.Client.GeneticsConsole.UI
                 {
                     BoxContainer activateButtonContainer = new BoxContainer { MinWidth = 100 };
                     BoxContainer mutationRow = CreateGeneTableRow(knownMutations, geneDisplay, activateButtonContainer);
+                    presentMutations.Add(geneDisplay.Gene.Blocks[0].Value);
                     if (!geneDisplay.Gene.Active)
                     {
                         var activateButton = new IndexedButton(index, Loc.GetString("genetics-console-ui-window-gene-activate-prompt"));
@@ -288,6 +297,56 @@ namespace Content.Client.GeneticsConsole.UI
                 }
 
                 ++index;
+            }
+            GeneSpliceTable.RemoveAllChildren();
+            if (knownMutations.Count == 0)
+            {
+                var spliceRow = new BoxContainer();
+                spliceRow.AddChild(new Label
+                {
+                    Text = Loc.GetString("genetics-console-ui-window-gene-splice-no-known"),
+                    HorizontalExpand = true
+                });
+
+                GeneSpliceTable.AddChild(spliceRow);
+            }
+            else
+            {
+                foreach (var mutation in knownMutations)
+                {
+                    var isPresent = presentMutations.Contains(mutation.Key);
+
+                    var spliceRow = new BoxContainer();
+                    var geneSpliceButton = new IndexedButton((int) mutation.Key, Loc.GetString("genetics-console-ui-window-gene-splice-prompt"));
+                    geneSpliceButton.OnPressed += e => OnSpliceButtonPressed?.Invoke(e, geneSpliceButton);
+                    geneSpliceButton.Disabled = (!mutagenForSplice || isPresent);
+                    spliceRow.AddChild(geneSpliceButton);
+
+                    if (isPresent)
+                    {
+                        spliceRow.AddChild(new Label
+                        {
+                            Text = Loc.GetString("genetics-console-ui-window-gene-splice-already-present"),
+                        });
+                    }
+                    else if (!mutagenForSplice)
+                    {
+                        spliceRow.AddChild(new Label
+                        {
+                            Text = Loc.GetString("genetics-console-ui-window-gene-splice-not-enough-mutagen"),
+                        });
+                    }
+                    
+
+                    spliceRow.AddChild(new Label
+                    {
+                        Text = mutation.Value,
+                        HorizontalExpand = true,
+                        Align = Label.AlignMode.Center
+                    });
+
+                    GeneSpliceTable.AddChild(spliceRow);
+                }
             }
         }
 
@@ -320,6 +379,11 @@ namespace Content.Client.GeneticsConsole.UI
         {
             ProgressBar.Visible = visible;
             ProgressBar.Value = percentage;
+        }
+
+        public void SetMutagenBufferLevel(float percentage)
+        {
+            MutagenBufferLevel.Value = percentage;
         }
 
         public void SetActiveScreen(GeneticsConsoleScreen screen)

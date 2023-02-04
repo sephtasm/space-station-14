@@ -9,6 +9,8 @@ namespace Content.Shared.Genetics.GeneticsConsole
         public readonly PodStatus PodStatus;
         public readonly bool PodConnected;
         public readonly bool PodInRange;
+        public readonly float MutagenLevel;
+        public readonly bool MutagenForSplice;
         public readonly TimeSpan TimeRemaining;
         public readonly TimeSpan TotalTime;
         public readonly List<GeneDisplay> SequencedGenes;
@@ -18,12 +20,14 @@ namespace Content.Shared.Genetics.GeneticsConsole
         public readonly bool ForceUpdate;
 
         public GeneticsConsoleBoundUserInterfaceState(EntityUid? podBodyUid, PodStatus podStatus, bool podConnected, bool podInRange,
-            TimeSpan timeRemaining, TimeSpan totalTime, List<GeneDisplay> sequencedGenes, Dictionary<long, string> knownMutations,
+            float mutagenLevel, bool mutagenForSplice, TimeSpan timeRemaining, TimeSpan totalTime, List<GeneDisplay> sequencedGenes, Dictionary<long, string> knownMutations,
             Gene? activationTargetGene, GenePuzzle? puzzle, bool forceUpdate)
         {
             PodBodyUid = podBodyUid;
             PodStatus = podStatus;
             PodInRange = podInRange;
+            MutagenLevel = mutagenLevel;
+            MutagenForSplice = mutagenForSplice;
             PodConnected = podConnected;
             TimeRemaining = timeRemaining;
             TotalTime = totalTime;
@@ -102,6 +106,16 @@ namespace Content.Shared.Genetics.GeneticsConsole
     }
 
     [Serializable, NetSerializable]
+    public sealed class XferToBeakerButtonPressedMessage : BoundUserInterfaceMessage
+    {
+    }
+
+    [Serializable, NetSerializable]
+    public sealed class XferFromBeakerButtonPressedMessage : BoundUserInterfaceMessage
+    {
+    }
+
+    [Serializable, NetSerializable]
     public sealed class RepairButtonPressedMessage : BoundUserInterfaceMessage
     {
         public int Index { get; set; }
@@ -122,6 +136,18 @@ namespace Content.Shared.Genetics.GeneticsConsole
             Index = index;
         }
     }
+
+    [Serializable, NetSerializable]
+    public sealed class GeneSpliceButtonPressedMessage : BoundUserInterfaceMessage
+    {
+        public int MutationId { get; set; }
+
+        public GeneSpliceButtonPressedMessage(int mutationId)
+        {
+            MutationId = mutationId;
+        }
+    }
+
 
     [Serializable, NetSerializable]
     public sealed class UnusedBlockButtonPressedMessage : BoundUserInterfaceMessage

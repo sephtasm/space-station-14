@@ -22,9 +22,12 @@ action-name-spell-ground-ice = Ice Patch
 action-description-spell-ground-ice = Create a patch of ice on the ground.
 
 genetics-mutation-name-electrokinesis = Electrokinesis
-
 action-name-spell-shoot-lightning = Lightning
 action-description-spell-shoot-lightning = Fire a bolt of lightning.
+
+genetics-mutation-name-laser-eyes = Laser Eyes
+action-name-spell-shoot-eye-beam = Eye Laser
+action-description-spell-shoot-eye-beam = Fire a laser from your eyes.
 
 genetics-mutation-name-buzzochloric-blood = Buzzochloric Blood
 action-name-spell-spawn-bees = Summon Bees
@@ -40,3 +43,10 @@ genetics-mutation-name-gut-fermentation-syndrome = Gut Fermentation Syndrome
 
 genetics-mutation-matter-eater-start-feed-message = {$user} starts biting {$entity}.
 genetics-mutation-matter-eater-eat-message = You take a bite out of {$entity} and chew.
+
+genetics-mutation-classification-unknown = Unknown {$classification} Mutation
+genetics-mutation-classification-environmental-adaptation = Environmental Adaptation
+genetics-mutation-classification-energy-manipulation = Energy Manipulation
+genetics-mutation-classification-blood = Blood
+genetics-mutation-classification-gastrological = Gastrological
+genetics-mutation-classification-optical = Optical

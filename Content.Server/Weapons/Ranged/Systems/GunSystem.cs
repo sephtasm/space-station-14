@@ -174,58 +174,7 @@ public sealed partial class GunSystem : SharedGunSystem
                     ShootProjectile(newAmmo.Owner, mapDirection, gunVelocity, user, gun.ProjectileSpeed);
                     break;
                 case HitscanPrototype hitscan:
-                    var ray = new CollisionRay(fromMap.Position, mapDirection.Normalized, hitscan.CollisionMask);
-
-                    var rayCastResults =
-                        Physics.IntersectRay(fromMap.MapId, ray, hitscan.MaxLength, user, false).ToList();
-
-                    if (rayCastResults.Count >= 1)
-                    {
-                        var result = rayCastResults[0];
-                        var hitEntity = result.HitEntity;
-                        var distance = result.Distance;
-                        FireEffects(fromCoordinates, distance, mapDirection.ToAngle(), hitscan, hitEntity);
-
-                        if (hitscan.StaminaDamage > 0f)
-                            _stamina.TakeStaminaDamage(hitEntity, hitscan.StaminaDamage, source:user);
-
-                        var dmg = hitscan.Damage;
-
-                        bool deleted = false;
-                        string hitName = ToPrettyString(hitEntity);
-                        if (dmg != null)
-                            dmg = Damageable.TryChangeDamage(hitEntity, dmg, origin: user);
-
-                        // check null again, as TryChangeDamage returns modified damage values
-                        if (dmg != null)
-                        {
-                            deleted = Deleted(hitEntity);
-
-                            if (!deleted)
-                            {
-                                if (dmg.Total > FixedPoint2.Zero)
-                                    RaiseNetworkEvent(new DamageEffectEvent(Color.Red, new List<EntityUid> {result.HitEntity}), Filter.Pvs(hitEntity, entityManager: EntityManager));
-
-                                // TODO get fallback position for playing hit sound.
-                                PlayImpactSound(hitEntity, dmg, hitscan.Sound, hitscan.ForceSound);
-                            }
-
-                            if (user != null)
-                            {
-                                Logs.Add(LogType.HitScanHit,
-                                    $"{ToPrettyString(user.Value):user} hit {hitName:target} using hitscan and dealt {dmg.Total:damage} damage");
-                            }
-                            else
-                            {
-                                Logs.Add(LogType.HitScanHit,
-                                    $"Hit {hitName:target} using hitscan and dealt {dmg.Total:damage} damage");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        FireEffects(fromCoordinates, hitscan.MaxLength, mapDirection.ToAngle(), hitscan);
-                    }
+                    FireHitscan(fromCoordinates, user, fromMap, mapDirection, hitscan);
 
                     Audio.PlayPredicted(gun.SoundGunshot, gun.Owner, user);
                     break;
@@ -238,6 +187,62 @@ public sealed partial class GunSystem : SharedGunSystem
         {
             FiredProjectiles = shotProjectiles,
         }, false);
+    }
+
+    public void FireHitscan(EntityCoordinates fromCoordinates, EntityUid? user, MapCoordinates fromMap, Vector2 mapDirection, HitscanPrototype hitscan)
+    {
+        var ray = new CollisionRay(fromMap.Position, mapDirection.Normalized, hitscan.CollisionMask);
+
+        var rayCastResults =
+            Physics.IntersectRay(fromMap.MapId, ray, hitscan.MaxLength, user, false).ToList();
+
+        if (rayCastResults.Count >= 1)
+        {
+            var result = rayCastResults[0];
+            var hitEntity = result.HitEntity;
+            var distance = result.Distance;
+            FireEffects(fromCoordinates, distance, mapDirection.ToAngle(), hitscan, hitEntity);
+
+            if (hitscan.StaminaDamage > 0f)
+                _stamina.TakeStaminaDamage(hitEntity, hitscan.StaminaDamage, source: user);
+
+            var dmg = hitscan.Damage;
+
+            bool deleted = false;
+            string hitName = ToPrettyString(hitEntity);
+            if (dmg != null)
+                dmg = Damageable.TryChangeDamage(hitEntity, dmg, origin: user);
+
+            // check null again, as TryChangeDamage returns modified damage values
+            if (dmg != null)
+            {
+                deleted = Deleted(hitEntity);
+
+                if (!deleted)
+                {
+                    if (dmg.Total > FixedPoint2.Zero)
+                        RaiseNetworkEvent(new DamageEffectEvent(Color.Red, new List<EntityUid> { result.HitEntity }), Filter.Pvs(hitEntity, entityManager: EntityManager));
+
+                    // TODO get fallback position for playing hit sound.
+                    PlayImpactSound(hitEntity, dmg, hitscan.Sound, hitscan.ForceSound);
+                }
+
+                if (user != null)
+                {
+                    Logs.Add(LogType.HitScanHit,
+                        $"{ToPrettyString(user.Value):user} hit {hitName:target} using hitscan and dealt {dmg.Total:damage} damage");
+                }
+                else
+                {
+                    Logs.Add(LogType.HitScanHit,
+                        $"Hit {hitName:target} using hitscan and dealt {dmg.Total:damage} damage");
+                }
+            }
+        }
+        else
+        {
+            FireEffects(fromCoordinates, hitscan.MaxLength, mapDirection.ToAngle(), hitscan);
+        }
     }
 
     public void ShootProjectile(EntityUid uid, Vector2 direction, Vector2 gunVelocity, EntityUid? user = null, float speed = 20f)
