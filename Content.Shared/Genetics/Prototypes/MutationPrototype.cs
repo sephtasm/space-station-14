@@ -19,6 +19,12 @@ public sealed class MutationPrototype : IPrototype
     public string LocalizationStringId { get; } = default!;
 
     /// <summary>
+    /// ID of the localization string used as a hint to the type of the mutation.
+    /// </summary>
+    [DataField("classificationStringId", required: true)]
+    public string ClassificationStringId { get; } = default!;
+
+    /// <summary>
     ///     Effect.
     /// </summary>
     [DataField("effects", serverOnly: true)]

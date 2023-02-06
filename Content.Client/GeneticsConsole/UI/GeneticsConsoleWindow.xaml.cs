@@ -274,11 +274,11 @@ namespace Content.Client.GeneticsConsole.UI
                 }
                 GeneRepairTable.AddChild(geneOverviewRow);
 
-                if (geneDisplay.Gene.Type == GeneType.Mutation)
+                if (geneDisplay.Gene.Type == GeneType.Mutation && geneDisplay.Gene.Mutation != null)
                 {
                     BoxContainer activateButtonContainer = new BoxContainer { MinWidth = 100 };
                     BoxContainer mutationRow = CreateGeneTableRow(knownMutations, geneDisplay, activateButtonContainer);
-                    presentMutations.Add(geneDisplay.Gene.Blocks[0].Value);
+                    presentMutations.Add(geneDisplay.Gene.Mutation.Id);
                     if (!geneDisplay.Gene.Active)
                     {
                         var activateButton = new IndexedButton(index, Loc.GetString("genetics-console-ui-window-gene-activate-prompt"));

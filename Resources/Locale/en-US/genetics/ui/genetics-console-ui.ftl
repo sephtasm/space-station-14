@@ -40,6 +40,7 @@ genetics-console-ui-window-patient-name = Patient Name: {$name}
 genetics-console-ui-window-patient-name-unknown = Unknown
 genetics-console-ui-window-gene-block-type = Type: {$type}
 
+genetics-console-ui-window-classification-unknown = Unknown {$classification} Mutation
 genetics-console-ui-window-gene-block-type-unknown = Unknown
 genetics-console-ui-window-gene-block-type-species = Species
 genetics-console-ui-window-gene-block-type-skin-color = Skin Color

@@ -44,9 +44,8 @@ genetics-mutation-name-gut-fermentation-syndrome = Gut Fermentation Syndrome
 genetics-mutation-matter-eater-start-feed-message = {$user} starts biting {$entity}.
 genetics-mutation-matter-eater-eat-message = You take a bite out of {$entity} and chew.
 
-genetics-mutation-classification-unknown = Unknown {$classification} Mutation
-genetics-mutation-classification-environmental-adaptation = Environmental Adaptation
-genetics-mutation-classification-energy-manipulation = Energy Manipulation
+genetics-mutation-classification-environmental-adaptation = Physiological
+genetics-mutation-classification-energy-manipulation = Psychokinetic
 genetics-mutation-classification-blood = Blood
 genetics-mutation-classification-gastrological = Gastrological
 genetics-mutation-classification-optical = Optical

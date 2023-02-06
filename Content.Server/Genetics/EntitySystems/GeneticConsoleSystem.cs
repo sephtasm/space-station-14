@@ -172,7 +172,7 @@ namespace Content.Server.Genetics
                 if (genePod.Scanning) timeRemaining = _timing.CurTime - genePod.StartTime;
                 totalTime = genePod.SequencingDuration * genePod.SequencingDurationMulitplier;
 
-                var bufferSln = slnManager.Solutions["buffer"];
+                var bufferSln = slnManager.Solutions[GenePodComponent.SolutionName];
                 mutagenLevel = (bufferSln.Volume / bufferSln.MaxVolume);
                 mutagenForSplice = (bufferSln.Volume >= genePod.BaseMutagenNeededForSplice);
 
@@ -210,7 +210,7 @@ namespace Content.Server.Genetics
             List<GeneDisplay> display = new();
             foreach (var gene in genes)
             {
-                if (gene.Type != GeneType.Mutation || gene.Active || researchedMutations.ContainsKey(gene.Blocks[0].Value))
+                if (gene.Type != GeneType.Mutation || gene.Active || gene.Mutation != null && researchedMutations.ContainsKey(gene.Mutation.Id))
                 {
                     display.Add(new GeneDisplay(gene, string.Join(" ", gene.Blocks.Select(b => b.Display))));
                 }
@@ -262,9 +262,9 @@ namespace Content.Server.Genetics
             {
                 foreach (var gene in geneticSequence.Genes)
                 {
-                    if (gene.Type == GeneType.Mutation && gene.Blocks.Count == 1 && gene.Active)
+                    if (gene.Type == GeneType.Mutation && gene.Mutation != null && gene.Active)
                     {
-                        _geneticsSystem.UpdateKnownMutations(pod.ConnectedConsole.Value, gene.Blocks[0].Value);
+                        _geneticsSystem.UpdateKnownMutations(pod.ConnectedConsole.Value, (uint) gene.Mutation.Id);
                     }
                 }
                 
@@ -327,7 +327,7 @@ namespace Content.Server.Genetics
                 return;
             var gene = geneticSequence.Genes[args.Index];
 
-            if (component.ResearchedMutations.ContainsKey(gene.Blocks[0].Value))
+            if (gene.Mutation != null && component.ResearchedMutations.ContainsKey(gene.Mutation.Id))
             {
                 DoMutationActivate(uid, gene, component.GenePod.Value, genePod);
             }
@@ -446,6 +446,7 @@ namespace Content.Server.Genetics
             var n = genePod.LastScannedBody;
 
             msg.AddMarkup(Loc.GetString("genetics-console-print-report-title", ("name", patientName)));
+            msg.PushNewline();
             if (TryComp<GeneticSequenceComponent>(genePod.LastScannedBody, out var geneticSequence))
             {
                 var geneDisplay = GenerateDisplayForAllGenes(geneticSequence.Genes, console.ResearchedMutations);

@@ -70,9 +70,12 @@ namespace Content.Shared.Genetics
                 case GeneType.Sex:
                     return Loc.GetString("genetics-console-ui-window-gene-block-type-sex");
                 case GeneType.Mutation:
-                    var mutationId = gene.Blocks[0].Value;
+                    var mutationId = gene.Mutation!.Id;
+
                     if (knownMutations.ContainsKey(mutationId)) return knownMutations[mutationId];
-                    return Loc.GetString("genetics-console-ui-window-gene-block-type-unknown");
+                    var classification = gene.Mutation.Classification;
+                    var classificationString = Loc.GetString("genetics-console-ui-window-classification-unknown", ("classification", classification));
+                    return classificationString;
                 default:
                     return Loc.GetString("genetics-console-ui-window-gene-block-type-unknown");
             }
@@ -354,13 +357,14 @@ namespace Content.Shared.Genetics
     [Serializable, NetSerializable]
     public sealed class Gene
     {
-        public Gene(GeneType type, List<Block> blocks, MarkingCategories? markingCategory = null, bool active = true, bool damaged = false)
+        public Gene(GeneType type, List<Block> blocks, MarkingCategories? markingCategory = null, bool active = true, MutationSpecifier? mutation = null, bool damaged = false)
         {
             Type = type;
             Blocks = blocks;
             MarkingCategory = markingCategory;
             Active = active;
             Damaged = damaged;
+            Mutation = mutation;
         }
 
         public bool Active { get; set; } = true;
@@ -368,9 +372,24 @@ namespace Content.Shared.Genetics
 
         public GeneType Type { get; set; }
 
+        public MutationSpecifier? Mutation { get; set; }
+
         public MarkingCategories? MarkingCategory { get; set; } = null;
         public List<Block> Blocks { get; set; } = new();
 
+    }
+
+    [Serializable, NetSerializable]
+    public sealed class MutationSpecifier
+    {
+        public string Classification { get; set; }
+        public long Id { get; set; }
+
+        public MutationSpecifier(string classification, long id)
+        {
+            Classification = classification;
+            Id = id;
+        }
     }
 
     [Serializable, NetSerializable]

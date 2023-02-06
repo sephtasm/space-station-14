@@ -374,7 +374,7 @@ namespace Content.Server.Genetics
                 // not needed
                 foreach (var gene in geneSequence.Genes)
                 {
-                    if (gene.Type == GeneType.Mutation && gene.Blocks[0].Value == ev.Value) gene.Active = true;
+                    if (gene.Mutation != null && gene.Mutation.Id == ev.Value) gene.Active = true;
                 }
                 var mutationProto = _mutationsIndex[ev.Value];
                 if (geneSequence.MutationEffectsEnabled)
@@ -393,7 +393,7 @@ namespace Content.Server.Genetics
                 // not needed
                 foreach (var gene in geneSequence.Genes)
                 {
-                    if (gene.Type == GeneType.Mutation && gene.Blocks[0].Value == ev.Value) gene.Active = false;
+                    if (gene.Mutation != null && gene.Mutation.Id == ev.Value) gene.Active = false;
                 }
                 var mutationProto = _mutationsIndex[ev.Value];
                 if (geneSequence.MutationEffectsEnabled)
@@ -438,16 +438,16 @@ namespace Content.Server.Genetics
 
         public MutationPrototype? TryGetMutationProtoForGene(Gene gene)
         {
-            if (gene.Type != GeneType.Mutation || gene.Blocks.Count != 1) return null;
-            var mutationId = gene.Blocks[0].Value;
+            if (gene.Type != GeneType.Mutation || gene.Mutation == null) return null;
+            var mutationId = (uint) gene.Mutation.Id;
             return _mutationsIndex[mutationId];
         }
 
         public void ActivateMutation(EntityUid uid, Gene gene, EntityUid? consoleUid = null)
         {
-            if (gene.Active) return;
+            if (gene.Active || gene.Mutation == null) return;
             gene.Active = true;
-            var mutationId = gene.Blocks[0].Value;
+            var mutationId = (uint) gene.Mutation.Id;
             RaiseLocalEvent(new ActivateMutationEvent(uid, mutationId, consoleUid));
         }
 
@@ -487,7 +487,7 @@ namespace Content.Server.Genetics
                         var found = false;
                         foreach (Gene g in component.Genes)
                         {
-                            if (g.Type == GeneType.Mutation && g.Blocks[0].Value == key)
+                            if (g.Mutation != null && g.Mutation.Id == key)
                             {
                                 ActivateMutation(uid, g);
                                 found = true;
@@ -575,7 +575,9 @@ namespace Content.Server.Genetics
         {
             var block = new List<Block>();
             block.Add(new Block(id, ObfuscateToString(id)));
-            var mutationGene = new Gene(GeneType.Mutation, block);
+            var mutationProto = _mutationsIndex[id];
+            var mutationSpec = new MutationSpecifier(Loc.GetString(mutationProto.ClassificationStringId), id);
+            var mutationGene = new Gene(GeneType.Mutation, block, mutation: mutationSpec);
             mutationGene.Active = false;
             return mutationGene;
         }

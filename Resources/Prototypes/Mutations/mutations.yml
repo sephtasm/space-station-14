@@ -195,7 +195,7 @@
     - !type:GiveActionMutationEffect
       worldActions:
         - ShootEyeBeam
-  weight: 10    
+  weight: 10
     
 
 # For Convenience
